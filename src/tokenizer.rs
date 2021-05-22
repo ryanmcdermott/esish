@@ -190,7 +190,39 @@ mod tests {
     }
     #[test]
     fn ignore_single_line_comment() {
-        let program = "// Single line comment \n'hello'";
+        let program = r#"// Single line comment
+        'hello'"#;
+        let mut tokenizer = Tokenizer::new(program.to_string());
+        let actual1 = tokenizer.get_next_token().unwrap();
+        let expected1 = Token {
+            kind: "IgnoreToken".to_string(),
+            value: Literal::Empty,
+        };
+        assert_eq!(actual1, expected1);
+
+        let actual2 = tokenizer.get_next_token().unwrap();
+        let expected2 = Token {
+            kind: "IgnoreToken".to_string(),
+            value: Literal::Empty,
+        };
+        assert_eq!(actual2, expected2);
+
+        let actual3 = tokenizer.get_next_token().unwrap();
+        let expected3 = Token {
+            kind: "StringLiteral".to_string(),
+            value: Literal::String(String::from("hello")),
+        };
+        assert_eq!(actual3, expected3);
+    }
+
+    #[test]
+    fn ignore_multi_line_comment() {
+        let program = r#"/**
+         * Multi 
+         * line 
+         * comment
+         */
+        'hello'"#;
         let mut tokenizer = Tokenizer::new(program.to_string());
         let actual1 = tokenizer.get_next_token().unwrap();
         let expected1 = Token {
