@@ -29,7 +29,7 @@ struct TokenRule {
 lazy_static! {
     // Token Regular Expressions.
     static ref NUMBER_REGEX: Regex = Regex::new(r"^\d+").unwrap();
-    static ref STRING_REGEX: Regex = Regex::new(r"^\d+").unwrap();
+    static ref STRING_REGEX: Regex = Regex::new(r"^'[^']*'").unwrap();
 
     // Token Rule definitions.
     static ref NUMBER_TOKEN_RULE: TokenRule = TokenRule {
@@ -66,21 +66,35 @@ impl Tokenizer {
         for token_rule in token_rules.into_iter() {
             if token_rule.rule.is_match(self.text.as_str()) {
                 let mat = token_rule.rule.find(self.text.as_str()).unwrap();
+                let mat_start = mat.start();
                 let mat_end = mat.end();
 
-                let value = self.text.as_str()[..mat_end].to_string();
-                let mut ret: Option<Token> = None;
-
                 if token_rule.kind == "NumberLiteral" {
-                    ret = Some(Token {
+                    let value = self.text.as_str()[..mat_end].to_string();
+                    let ret = Some(Token {
                         kind: token_rule.kind.clone(),
                         value: Literal::Number(value.parse::<i64>().unwrap()),
                     });
+
+                    self.text = self.text.as_str()[mat_end..].to_string();
+                    self.cursor += mat_end as i64;
+                    return ret;
                 }
 
-                self.text = self.text.as_str()[mat_end..].to_string();
-                self.cursor += mat_end as i64;
-                return ret;
+                if token_rule.kind == "StringLiteral" {
+                    let begin_quote = mat_start + 1;
+                    let end_quote = mat_end - 1;
+                    let value = self.text.as_str()[begin_quote..end_quote].to_string();
+
+                    let ret = Some(Token {
+                        kind: token_rule.kind.clone(),
+                        value: Literal::String(value),
+                    });
+
+                    self.text = self.text.as_str()[mat_end..].to_string();
+                    self.cursor += mat_end as i64;
+                    return ret;
+                }
             }
         }
 
@@ -107,6 +121,19 @@ mod tests {
         let expected = Token {
             kind: "NumberLiteral".to_string(),
             value: Literal::Number(42),
+        };
+
+        assert_eq!(actual, expected);
+        assert_eq!(tokenizer.cursor, program.chars().count() as i64);
+    }
+    #[test]
+    fn string_literal() {
+        let program = "'hello'";
+        let mut tokenizer = Tokenizer::new(program.to_string());
+        let actual = tokenizer.get_next_token().unwrap();
+        let expected = Token {
+            kind: "StringLiteral".to_string(),
+            value: Literal::String(String::from("hello")),
         };
 
         assert_eq!(actual, expected);
