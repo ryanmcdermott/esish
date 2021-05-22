@@ -32,6 +32,7 @@ lazy_static! {
     static ref NUMBER_REGEX: Regex = Regex::new(r"^\d+").unwrap();
     static ref STRING_REGEX: Regex = Regex::new(r"^'[^']*'").unwrap();
     static ref WHITESPACE_REGEX: Regex = Regex::new(r"^\s+").unwrap();
+    static ref SINGLE_LINE_COMMENT_REGEX: Regex = Regex::new(r"^//.*").unwrap();
 
     // Token Rule definitions.
     static ref NUMBER_TOKEN_RULE: TokenRule = TokenRule {
@@ -46,12 +47,17 @@ lazy_static! {
         kind: "IgnoreToken".to_string(),
         rule: &WHITESPACE_REGEX
     };
+    static ref IGNORE_SINGLE_LINE_COMMENT_TOKEN_RULE: TokenRule = TokenRule {
+        kind: "IgnoreToken".to_string(),
+        rule: &SINGLE_LINE_COMMENT_REGEX
+    };
 
     // Token Rule set.
     static ref TOKEN_RULES: Vec<&'static TokenRule> = vec![
+        &IGNORE_SINGLE_LINE_COMMENT_TOKEN_RULE,
+        &IGNORE_WHITESPACE_TOKEN_RULE,
         &NUMBER_TOKEN_RULE,
         &STRING_TOKEN_RULE,
-        &IGNORE_WHITESPACE_TOKEN_RULE,
     ];
 }
 
@@ -64,7 +70,7 @@ impl Tokenizer {
     }
 
     pub fn has_more_tokens(&self) -> bool {
-        self.cursor < (self.text.chars().count() as i64)
+        self.text.chars().count() > 0
     }
 
     pub fn get_next_token(&mut self) -> Option<Token> {
@@ -175,5 +181,30 @@ mod tests {
             value: Literal::String(String::from(" hello")),
         };
         assert_eq!(actual2, expected2);
+    }
+    #[test]
+    fn ignore_single_line_comment() {
+        let program = "// Single line comment \n'hello'";
+        let mut tokenizer = Tokenizer::new(program.to_string());
+        let actual1 = tokenizer.get_next_token().unwrap();
+        let expected1 = Token {
+            kind: "IgnoreToken".to_string(),
+            value: Literal::Empty,
+        };
+        assert_eq!(actual1, expected1);
+
+        let actual2 = tokenizer.get_next_token().unwrap();
+        let expected2 = Token {
+            kind: "IgnoreToken".to_string(),
+            value: Literal::Empty,
+        };
+        assert_eq!(actual2, expected2);
+
+        let actual3 = tokenizer.get_next_token().unwrap();
+        let expected3 = Token {
+            kind: "StringLiteral".to_string(),
+            value: Literal::String(String::from("hello")),
+        };
+        assert_eq!(actual3, expected3);
     }
 }
