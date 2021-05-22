@@ -33,6 +33,7 @@ lazy_static! {
     static ref STRING_REGEX: Regex = Regex::new(r"^'[^']*'").unwrap();
     static ref WHITESPACE_REGEX: Regex = Regex::new(r"^\s+").unwrap();
     static ref SINGLE_LINE_COMMENT_REGEX: Regex = Regex::new(r"^//.*").unwrap();
+    static ref MULTI_LINE_COMMENT_REGEX: Regex = Regex::new(r"^/\*[\s\S]*?\*/").unwrap();
 
     // Token Rule definitions.
     static ref NUMBER_TOKEN_RULE: TokenRule = TokenRule {
@@ -51,11 +52,16 @@ lazy_static! {
         kind: "IgnoreToken".to_string(),
         rule: &SINGLE_LINE_COMMENT_REGEX
     };
+    static ref IGNORE_MULTI_LINE_COMMENT_TOKEN_RULE: TokenRule = TokenRule {
+        kind: "IgnoreToken".to_string(),
+        rule: &MULTI_LINE_COMMENT_REGEX
+    };
 
     // Token Rule set.
     static ref TOKEN_RULES: Vec<&'static TokenRule> = vec![
-        &IGNORE_SINGLE_LINE_COMMENT_TOKEN_RULE,
         &IGNORE_WHITESPACE_TOKEN_RULE,
+        &IGNORE_SINGLE_LINE_COMMENT_TOKEN_RULE,
+        &IGNORE_MULTI_LINE_COMMENT_TOKEN_RULE,
         &NUMBER_TOKEN_RULE,
         &STRING_TOKEN_RULE,
     ];
