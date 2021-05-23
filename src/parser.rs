@@ -47,25 +47,44 @@ impl Parser {
             Some(_) => {
                 return Program {
                     node_type: NodeType::Program,
-                    body: self.parse_statement_list(),
+                    body: self.statement_list(),
                 }
             }
         };
     }
 
-    fn parse_statement_list(&self) -> Vec<Node> {
+    /**
+     * StatementList
+     *   : Statement
+     *   | StatementList Statement
+     *   ;
+     */
+    fn statement_list(&self) -> Vec<Node> {
         let statements = Vec::new();
 
         statements
     }
 
-    fn parse_statement(&self) {
+    /**
+     * Statement
+     *   : ExpressionStatement
+     *   | EmptyStatement
+     *   ;
+     */
+    fn statement(&self) {
         //
     }
 
-    fn eat(&self) {
+    /**
+     * EmptyStatement
+     *   : ';'
+     *   ;
+     */
+    fn empty_statement(&self) {
         //
     }
+
+    fn eat(&self, token: Token) {}
 }
 
 #[cfg(test)]
