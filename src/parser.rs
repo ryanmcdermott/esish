@@ -76,6 +76,52 @@ impl Parser {
     }
 
     /**
+     * ExpressionStatement
+     *   : Expression ';'
+     *   ;
+     */
+    fn expression_statement(&self) {
+        //
+    }
+
+    /**
+     * Expression
+     *   : Literal
+     *   ;
+     */
+    fn expression(&self) {
+        //
+    }
+
+    /**
+     * Literal
+     *   : NumericLiteral
+     *   | StringLiteral
+     *   ;
+     */
+    fn literal(&self) {
+        //
+    }
+
+    /**
+     * StringLiteral
+     *   : STRING
+     *   ;
+     */
+    fn string_literal(&self) {
+        //
+    }
+
+    /**
+     * NumericLiteral
+     *   : NUMBER
+     *   ;
+     */
+    fn numeric_literal(&self) {
+        //
+    }
+
+    /**
      * EmptyStatement
      *   : ';'
      *   ;
@@ -84,7 +130,9 @@ impl Parser {
         //
     }
 
-    fn eat(&self, token: Token) {}
+    fn eat(&self, token: Token) {
+        //
+    }
 }
 
 #[cfg(test)]
