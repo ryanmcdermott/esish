@@ -25,7 +25,6 @@ pub struct Token {
 
 pub struct Tokenizer {
     text: String,
-    cursor: i64,
 }
 
 struct TokenRule {
@@ -81,10 +80,7 @@ lazy_static! {
 
 impl Tokenizer {
     pub fn new(text: String) -> Tokenizer {
-        Tokenizer {
-            text: text,
-            cursor: 0,
-        }
+        Tokenizer { text: text }
     }
 
     pub fn has_more_tokens(&self) -> bool {
@@ -105,7 +101,6 @@ impl Tokenizer {
 
                 if token_rule.kind == TokenType::IgnoreToken {
                     self.text = self.text.as_str()[mat_end..].to_string();
-                    self.cursor += mat_end as i64;
                     return Some(Token {
                         kind: token_rule.kind,
                         value: Literal::Empty,
@@ -120,7 +115,6 @@ impl Tokenizer {
                     });
 
                     self.text = self.text.as_str()[mat_end..].to_string();
-                    self.cursor += mat_end as i64;
                     return ret;
                 }
 
@@ -135,17 +129,12 @@ impl Tokenizer {
                     });
 
                     self.text = self.text.as_str()[mat_end..].to_string();
-                    self.cursor += mat_end as i64;
                     return ret;
                 }
             }
         }
 
         None
-    }
-
-    pub fn get_cursor(&self) -> i64 {
-        self.cursor
     }
 
     pub fn get_text(&self) -> &String {
@@ -167,7 +156,6 @@ mod tests {
         };
 
         assert_eq!(actual, expected);
-        assert_eq!(tokenizer.cursor, program.chars().count() as i64);
     }
     #[test]
     fn string_literal() {
@@ -180,7 +168,6 @@ mod tests {
         };
 
         assert_eq!(actual, expected);
-        assert_eq!(tokenizer.cursor, program.chars().count() as i64);
     }
     #[test]
     fn ignore_whitespace() {
