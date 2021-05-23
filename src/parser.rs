@@ -5,14 +5,21 @@ use crate::tokenizer::{Token, Tokenizer};
 pub struct ExpressionStatement {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Node {
-    ExpressionStatement(ExpressionStatement),
+pub struct Program {
+    node_type: NodeType,
+    body: Vec<Node>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Program {
-    node_type: String,
-    body: Vec<Node>,
+pub enum NodeType {
+    Program,
+    ExpressionStatement,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Node {
+    Program,
+    ExpressionStatement(ExpressionStatement),
 }
 
 pub struct Parser {
@@ -33,13 +40,13 @@ impl Parser {
         match &self.lookahead {
             None => {
                 return Program {
-                    node_type: "Program".to_string(),
+                    node_type: NodeType::Program,
                     body: Vec::new(),
                 }
             }
             Some(_) => {
                 return Program {
-                    node_type: "Program".to_string(),
+                    node_type: NodeType::Program,
                     body: self.parse_statement_list(),
                 }
             }
@@ -47,7 +54,17 @@ impl Parser {
     }
 
     fn parse_statement_list(&self) -> Vec<Node> {
-        Vec::new()
+        let statements = Vec::new();
+
+        statements
+    }
+
+    fn parse_statement(&self) {
+        //
+    }
+
+    fn eat(&self) {
+        //
     }
 }
 
@@ -60,10 +77,12 @@ mod tests {
         let mut parser = Parser::new(tokenizer);
         let actual = parser.parse();
         let expected = Program {
-            node_type: "Program".to_string(),
+            node_type: NodeType::Program,
             body: vec![],
         };
 
         assert_eq!(actual, expected);
     }
+
+    fn numeric_literal() {}
 }
