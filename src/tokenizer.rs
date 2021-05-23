@@ -7,6 +7,7 @@ pub enum TokenType {
     NumberLiteral,
     StringLiteral,
     IgnoreToken,
+    Semicolon,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -39,6 +40,7 @@ lazy_static! {
     static ref WHITESPACE_REGEX: Regex = Regex::new(r"^\s+").unwrap();
     static ref SINGLE_LINE_COMMENT_REGEX: Regex = Regex::new(r"^//.*").unwrap();
     static ref MULTI_LINE_COMMENT_REGEX: Regex = Regex::new(r"^/\*[\s\S]*?\*/").unwrap();
+    static ref SEMICOLON_REGEX: Regex = Regex::new(r"^;").unwrap();
 
     // Token Rule definitions.
     static ref NUMBER_TOKEN_RULE: TokenRule = TokenRule {
@@ -61,6 +63,10 @@ lazy_static! {
         kind: TokenType::IgnoreToken,
         rule: &MULTI_LINE_COMMENT_REGEX
     };
+    static ref SEMICOLON_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::Semicolon,
+        rule: &SEMICOLON_REGEX
+    };
 
     // Token Rule set.
     static ref TOKEN_RULES: Vec<&'static TokenRule> = vec![
@@ -69,6 +75,7 @@ lazy_static! {
         &IGNORE_MULTI_LINE_COMMENT_TOKEN_RULE,
         &NUMBER_TOKEN_RULE,
         &STRING_TOKEN_RULE,
+        &SEMICOLON_TOKEN_RULE
     ];
 }
 
