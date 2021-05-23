@@ -2,7 +2,12 @@
 use lazy_static::lazy_static;
 use regex::Regex;
 
-pub type TokenType = String;
+#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+pub enum TokenType {
+    NumberLiteral,
+    StringLiteral,
+    IgnoreToken,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Literal {
@@ -37,23 +42,23 @@ lazy_static! {
 
     // Token Rule definitions.
     static ref NUMBER_TOKEN_RULE: TokenRule = TokenRule {
-        kind: "NumberLiteral".to_string(),
+        kind: TokenType::NumberLiteral,
         rule: &NUMBER_REGEX
     };
     static ref STRING_TOKEN_RULE: TokenRule = TokenRule {
-        kind: "StringLiteral".to_string(),
+        kind: TokenType::StringLiteral,
         rule: &STRING_REGEX
     };
     static ref IGNORE_WHITESPACE_TOKEN_RULE: TokenRule = TokenRule {
-        kind: "IgnoreToken".to_string(),
+        kind: TokenType::IgnoreToken,
         rule: &WHITESPACE_REGEX
     };
     static ref IGNORE_SINGLE_LINE_COMMENT_TOKEN_RULE: TokenRule = TokenRule {
-        kind: "IgnoreToken".to_string(),
+        kind: TokenType::IgnoreToken,
         rule: &SINGLE_LINE_COMMENT_REGEX
     };
     static ref IGNORE_MULTI_LINE_COMMENT_TOKEN_RULE: TokenRule = TokenRule {
-        kind: "IgnoreToken".to_string(),
+        kind: TokenType::IgnoreToken,
         rule: &MULTI_LINE_COMMENT_REGEX
     };
 
@@ -91,19 +96,19 @@ impl Tokenizer {
                 let mat_start = mat.start();
                 let mat_end = mat.end();
 
-                if token_rule.kind == "IgnoreToken" {
+                if token_rule.kind == TokenType::IgnoreToken {
                     self.text = self.text.as_str()[mat_end..].to_string();
                     self.cursor += mat_end as i64;
                     return Some(Token {
-                        kind: token_rule.kind.clone(),
+                        kind: token_rule.kind,
                         value: Literal::Empty,
                     });
                 }
 
-                if token_rule.kind == "NumberLiteral" {
+                if token_rule.kind == TokenType::NumberLiteral {
                     let value = self.text.as_str()[..mat_end].to_string();
                     let ret = Some(Token {
-                        kind: token_rule.kind.clone(),
+                        kind: token_rule.kind,
                         value: Literal::Number(value.parse::<i64>().unwrap()),
                     });
 
@@ -112,13 +117,13 @@ impl Tokenizer {
                     return ret;
                 }
 
-                if token_rule.kind == "StringLiteral" {
+                if token_rule.kind == TokenType::StringLiteral {
                     let begin_quote = mat_start + 1;
                     let end_quote = mat_end - 1;
                     let value = self.text.as_str()[begin_quote..end_quote].to_string();
 
                     let ret = Some(Token {
-                        kind: token_rule.kind.clone(),
+                        kind: token_rule.kind,
                         value: Literal::String(value),
                     });
 
@@ -150,7 +155,7 @@ mod tests {
         let mut tokenizer = Tokenizer::new(program.to_string());
         let actual = tokenizer.get_next_token().unwrap();
         let expected = Token {
-            kind: "NumberLiteral".to_string(),
+            kind: TokenType::NumberLiteral,
             value: Literal::Number(42),
         };
 
@@ -163,7 +168,7 @@ mod tests {
         let mut tokenizer = Tokenizer::new(program.to_string());
         let actual = tokenizer.get_next_token().unwrap();
         let expected = Token {
-            kind: "StringLiteral".to_string(),
+            kind: TokenType::StringLiteral,
             value: Literal::String(String::from("hello")),
         };
 
@@ -176,14 +181,14 @@ mod tests {
         let mut tokenizer = Tokenizer::new(program.to_string());
         let actual1 = tokenizer.get_next_token().unwrap();
         let expected1 = Token {
-            kind: "IgnoreToken".to_string(),
+            kind: TokenType::IgnoreToken,
             value: Literal::Empty,
         };
         assert_eq!(actual1, expected1);
 
         let actual2 = tokenizer.get_next_token().unwrap();
         let expected2 = Token {
-            kind: "StringLiteral".to_string(),
+            kind: TokenType::StringLiteral,
             value: Literal::String(String::from(" hello")),
         };
         assert_eq!(actual2, expected2);
@@ -195,21 +200,21 @@ mod tests {
         let mut tokenizer = Tokenizer::new(program.to_string());
         let actual1 = tokenizer.get_next_token().unwrap();
         let expected1 = Token {
-            kind: "IgnoreToken".to_string(),
+            kind: TokenType::IgnoreToken,
             value: Literal::Empty,
         };
         assert_eq!(actual1, expected1);
 
         let actual2 = tokenizer.get_next_token().unwrap();
         let expected2 = Token {
-            kind: "IgnoreToken".to_string(),
+            kind: TokenType::IgnoreToken,
             value: Literal::Empty,
         };
         assert_eq!(actual2, expected2);
 
         let actual3 = tokenizer.get_next_token().unwrap();
         let expected3 = Token {
-            kind: "StringLiteral".to_string(),
+            kind: TokenType::StringLiteral,
             value: Literal::String(String::from("hello")),
         };
         assert_eq!(actual3, expected3);
@@ -226,21 +231,21 @@ mod tests {
         let mut tokenizer = Tokenizer::new(program.to_string());
         let actual1 = tokenizer.get_next_token().unwrap();
         let expected1 = Token {
-            kind: "IgnoreToken".to_string(),
+            kind: TokenType::IgnoreToken,
             value: Literal::Empty,
         };
         assert_eq!(actual1, expected1);
 
         let actual2 = tokenizer.get_next_token().unwrap();
         let expected2 = Token {
-            kind: "IgnoreToken".to_string(),
+            kind: TokenType::IgnoreToken,
             value: Literal::Empty,
         };
         assert_eq!(actual2, expected2);
 
         let actual3 = tokenizer.get_next_token().unwrap();
         let expected3 = Token {
-            kind: "StringLiteral".to_string(),
+            kind: TokenType::StringLiteral,
             value: Literal::String(String::from("hello")),
         };
         assert_eq!(actual3, expected3);
