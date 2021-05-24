@@ -2,34 +2,20 @@
 use crate::tokenizer::{Token, TokenType, Tokenizer};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum NodeType {
-    Program,
-    ExpressionStatement,
-    NumericLiteral,
-    StringLiteral,
-    EmptyStatement,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Program {
-    node_type: NodeType,
     body: Vec<Node>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct EmptyStatement {
-    node_type: NodeType,
-}
+pub struct EmptyStatement {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NumericLiteral {
-    node_type: NodeType,
     value: i64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StringLiteral {
-    node_type: NodeType,
     value: String,
 }
 
@@ -54,8 +40,6 @@ pub struct ExpressionStatement {
 pub enum Node {
     Program(Program),
     EmptyStatement(EmptyStatement),
-    NumericLiteral(NumericLiteral),
-    StringLiteral(StringLiteral),
     ExpressionStatement(ExpressionStatement),
 }
 
@@ -76,14 +60,10 @@ impl Parser {
     fn parse(&mut self) -> Node {
         match &self.lookahead {
             None => {
-                return Node::Program(Program {
-                    node_type: NodeType::Program,
-                    body: Vec::new(),
-                });
+                return Node::Program(Program { body: Vec::new() });
             }
             Some(_) => {
                 return Node::Program(Program {
-                    node_type: NodeType::Program,
                     body: self.statement_list(),
                 });
             }
@@ -174,7 +154,6 @@ impl Parser {
         match left.kind {
             TokenType::NumberLiteral => {
                 let literal = NumericLiteral {
-                    node_type: NodeType::NumericLiteral,
                     value: left.value.as_ref().unwrap().parse::<i64>().unwrap(),
                 };
 
@@ -182,7 +161,6 @@ impl Parser {
             }
             TokenType::StringLiteral => {
                 let literal = StringLiteral {
-                    node_type: NodeType::StringLiteral,
                     value: left.value.as_ref().unwrap().to_string(),
                 };
 
@@ -200,9 +178,7 @@ impl Parser {
     fn empty_statement(&mut self) -> EmptyStatement {
         self.eat(TokenType::Semicolon);
 
-        EmptyStatement {
-            node_type: NodeType::EmptyStatement,
-        }
+        EmptyStatement {}
     }
 
     fn eat(&mut self, token_type: TokenType) {
@@ -223,10 +199,7 @@ mod tests {
         let tokenizer = Tokenizer::new("".to_string());
         let mut parser = Parser::new(tokenizer);
         let actual = parser.parse();
-        let expected = Node::Program(Program {
-            node_type: NodeType::Program,
-            body: vec![],
-        });
+        let expected = Node::Program(Program { body: vec![] });
 
         assert_eq!(actual, expected);
     }
@@ -236,27 +209,28 @@ mod tests {
         let mut parser = Parser::new(tokenizer);
         let actual = parser.parse();
         let expected = Node::Program(Program {
-            node_type: NodeType::Program,
-            body: vec![Node::EmptyStatement(EmptyStatement {
-                node_type: NodeType::EmptyStatement,
-            })],
+            body: vec![Node::EmptyStatement(EmptyStatement {})],
         });
 
         assert_eq!(actual, expected);
     }
 
-    // #[test]
-    // fn expression_statement_numeric_literal() {
-    //     let tokenizer = Tokenizer::new("42;".to_string());
-    //     let mut parser = Parser::new(tokenizer);
-    //     let actual = parser.parse();
-    //     let expected = Program {
-    //         node_type: NodeType::Program,
-    //         body: vec![Node::EmptyStatement(EmptyStatement {
-    //             node_type: NodeType::EmptyStatement,
-    //         })],
-    //     };
+    #[test]
+    fn expression_statement_numeric_literal() {
+        let tokenizer = Tokenizer::new("42;".to_string());
+        let mut parser = Parser::new(tokenizer);
+        let actual = parser.parse();
+        let expected = Node::Program(Program {
+            body: vec![
+                Node::ExpressionStatement(ExpressionStatement {
+                    expression: Expression::Literal(Literal::NumericLiteral(NumericLiteral {
+                        value: 42,
+                    })),
+                }),
+                Node::EmptyStatement(EmptyStatement {}),
+            ],
+        });
 
-    //     assert_eq!(actual, expected);
-    // }
+        assert_eq!(actual, expected);
+    }
 }
