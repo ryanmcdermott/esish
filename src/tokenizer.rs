@@ -12,17 +12,12 @@ pub enum TokenType {
     ComplexAssignment,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Literal {
-    String(String),
-    Number(i64),
-    Empty,
-}
+type Literal = String;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {
     pub kind: TokenType,
-    pub value: Literal,
+    pub value: Option<Literal>,
 }
 
 pub struct Tokenizer {
@@ -102,24 +97,6 @@ impl Tokenizer {
                 let mat_end = mat.end();
 
                 match token_rule.kind {
-                    TokenType::IgnoreToken | TokenType::Semicolon => {
-                        self.text = self.text.as_str()[mat_end..].to_string();
-                        return Some(Token {
-                            kind: token_rule.kind,
-                            value: Literal::Empty,
-                        });
-                    }
-
-                    TokenType::NumberLiteral => {
-                        let value = self.text.as_str()[..mat_end].to_string();
-                        let ret = Some(Token {
-                            kind: token_rule.kind,
-                            value: Literal::Number(value.parse::<i64>().unwrap()),
-                        });
-                        self.text = self.text.as_str()[mat_end..].to_string();
-                        return ret;
-                    }
-
                     TokenType::StringLiteral => {
                         let begin_quote = mat_start + 1;
                         let end_quote = mat_end - 1;
@@ -127,9 +104,26 @@ impl Tokenizer {
 
                         let ret = Some(Token {
                             kind: token_rule.kind,
-                            value: Literal::String(value),
+                            value: Some(value),
                         });
 
+                        self.text = self.text.as_str()[mat_end..].to_string();
+                        return ret;
+                    }
+                    TokenType::IgnoreToken => {
+                        let ret = Some(Token {
+                            kind: token_rule.kind,
+                            value: None,
+                        });
+                        self.text = self.text.as_str()[mat_end..].to_string();
+                        return ret;
+                    }
+                    _ => {
+                        let value = self.text.as_str()[..mat_end].to_string();
+                        let ret = Some(Token {
+                            kind: token_rule.kind,
+                            value: Some(value),
+                        });
                         self.text = self.text.as_str()[mat_end..].to_string();
                         return ret;
                     }
@@ -162,7 +156,7 @@ mod tests {
             String::from("42"),
             vec![Token {
                 kind: TokenType::NumberLiteral,
-                value: Literal::Number(42),
+                value: Some(String::from("42")),
             }],
         );
     }
@@ -172,7 +166,7 @@ mod tests {
             String::from("'hello'"),
             vec![Token {
                 kind: TokenType::StringLiteral,
-                value: Literal::String(String::from("hello")),
+                value: Some(String::from("hello")),
             }],
         );
     }
@@ -183,11 +177,11 @@ mod tests {
             vec![
                 Token {
                     kind: TokenType::IgnoreToken,
-                    value: Literal::Empty,
+                    value: None,
                 },
                 Token {
                     kind: TokenType::StringLiteral,
-                    value: Literal::String(String::from(" hello")),
+                    value: Some(String::from(" hello")),
                 },
             ],
         );
@@ -201,15 +195,15 @@ mod tests {
             vec![
                 Token {
                     kind: TokenType::IgnoreToken,
-                    value: Literal::Empty,
+                    value: None,
                 },
                 Token {
                     kind: TokenType::IgnoreToken,
-                    value: Literal::Empty,
+                    value: None,
                 },
                 Token {
                     kind: TokenType::StringLiteral,
-                    value: Literal::String(String::from("hello")),
+                    value: Some(String::from("hello")),
                 },
             ],
         );
@@ -228,15 +222,15 @@ mod tests {
             vec![
                 Token {
                     kind: TokenType::IgnoreToken,
-                    value: Literal::Empty,
+                    value: None,
                 },
                 Token {
                     kind: TokenType::IgnoreToken,
-                    value: Literal::Empty,
+                    value: None,
                 },
                 Token {
                     kind: TokenType::StringLiteral,
-                    value: Literal::String(String::from("hello")),
+                    value: Some(String::from("hello")),
                 },
             ],
         );
@@ -249,11 +243,11 @@ mod tests {
             vec![
                 Token {
                     kind: TokenType::StringLiteral,
-                    value: Literal::String(String::from(" hello")),
+                    value: Some(String::from(" hello")),
                 },
                 Token {
                     kind: TokenType::Semicolon,
-                    value: Literal::Empty,
+                    value: Some(String::from(";")),
                 },
             ],
         );

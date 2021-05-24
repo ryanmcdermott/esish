@@ -119,8 +119,8 @@ impl Parser {
                 return Node::EmptyStatement(self.empty_statement());
             }
 
-            TokenType::IgnoreToken | TokenType::NumberLiteral | TokenType::StringLiteral => {
-                panic!("Not implemented");
+            _ => {
+                return Node::ExpressionStatement(self.expression_statement());
             }
         }
     }
@@ -130,7 +130,7 @@ impl Parser {
      *   : Expression ';'
      *   ;
      */
-    fn expression_statement(&self) -> ExpressionStatement {
+    fn expression_statement(&mut self) -> ExpressionStatement {
         ExpressionStatement {
             expression: self.expression(),
         }
@@ -141,7 +141,7 @@ impl Parser {
      *   : Literal
      *   ;
      */
-    fn expression(&self) -> Expression {
+    fn expression(&mut self) -> Expression {
         self.assignment_expression()
     }
 
@@ -169,13 +169,13 @@ impl Parser {
      *   | StringLiteral
      *   ;
      */
-    fn literal(&self) -> Literal {
-        let left = self.lookahead.unwrap();
+    fn literal(&mut self) -> Literal {
+        let left = self.lookahead.as_ref().unwrap();
         match left.kind {
             TokenType::NumberLiteral => {
                 let literal = NumericLiteral {
                     node_type: NodeType::NumericLiteral,
-                    value: left.value,
+                    value: left.value.as_ref().unwrap().parse::<i64>().unwrap(),
                 };
 
                 return Literal::NumericLiteral(literal);
@@ -183,7 +183,7 @@ impl Parser {
             TokenType::StringLiteral => {
                 let literal = StringLiteral {
                     node_type: NodeType::StringLiteral,
-                    value: left.value,
+                    value: left.value.as_ref().unwrap().to_string(),
                 };
 
                 return Literal::StringLiteral(literal);
