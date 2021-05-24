@@ -2,12 +2,6 @@
 use crate::tokenizer::{Token, TokenType, Tokenizer};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Program {
-    node_type: NodeType,
-    body: Vec<Node>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NodeType {
     Program,
     ExpressionStatement,
@@ -15,18 +9,15 @@ pub enum NodeType {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ExpressionStatement {}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct EmptyStatement {
-    node_type: NodeType,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Node {
-    Program,
-    ExpressionStatement(ExpressionStatement),
-    EmptyStatement(EmptyStatement),
+    Program {
+        node_type: NodeType,
+        body: Vec<Node>,
+    },
+    EmptyStatement {
+        node_type: NodeType,
+    },
+    ExpressionStatement {},
 }
 
 pub struct Parser {
@@ -43,16 +34,16 @@ impl Parser {
         }
     }
 
-    fn parse(&mut self) -> Program {
+    fn parse(&mut self) -> Node {
         match &self.lookahead {
             None => {
-                return Program {
+                return Node::Program {
                     node_type: NodeType::Program,
                     body: Vec::new(),
                 }
             }
             Some(_) => {
-                return Program {
+                return Node::Program {
                     node_type: NodeType::Program,
                     body: self.statement_list(),
                 }
@@ -86,8 +77,7 @@ impl Parser {
         let foo = self.lookahead.clone();
         match foo.unwrap().kind {
             TokenType::Semicolon => {
-                let node = self.empty_statement();
-                return Node::EmptyStatement(node);
+                return self.empty_statement();
             }
 
             TokenType::IgnoreToken | TokenType::NumberLiteral | TokenType::StringLiteral => {
@@ -147,10 +137,10 @@ impl Parser {
      *   : ';'
      *   ;
      */
-    fn empty_statement(&mut self) -> EmptyStatement {
+    fn empty_statement(&mut self) -> Node {
         self.eat(TokenType::Semicolon);
 
-        EmptyStatement {
+        Node::EmptyStatement {
             node_type: NodeType::EmptyStatement,
         }
     }
@@ -173,7 +163,7 @@ mod tests {
         let tokenizer = Tokenizer::new("".to_string());
         let mut parser = Parser::new(tokenizer);
         let actual = parser.parse();
-        let expected = Program {
+        let expected = Node::Program {
             node_type: NodeType::Program,
             body: vec![],
         };
@@ -185,13 +175,28 @@ mod tests {
         let tokenizer = Tokenizer::new(";".to_string());
         let mut parser = Parser::new(tokenizer);
         let actual = parser.parse();
-        let expected = Program {
+        let expected = Node::Program {
             node_type: NodeType::Program,
-            body: vec![Node::EmptyStatement(EmptyStatement {
+            body: vec![Node::EmptyStatement {
                 node_type: NodeType::EmptyStatement,
-            })],
+            }],
         };
 
         assert_eq!(actual, expected);
     }
+
+    // #[test]
+    // fn expression_statement() {
+    //     let tokenizer = Tokenizer::new("42;".to_string());
+    //     let mut parser = Parser::new(tokenizer);
+    //     let actual = parser.parse();
+    //     let expected = Program {
+    //         node_type: NodeType::Program,
+    //         body: vec![Node::EmptyStatement(EmptyStatement {
+    //             node_type: NodeType::EmptyStatement,
+    //         })],
+    //     };
+
+    //     assert_eq!(actual, expected);
+    // }
 }
