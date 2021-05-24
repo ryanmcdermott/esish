@@ -99,37 +99,38 @@ impl Tokenizer {
                 let mat_start = mat.start();
                 let mat_end = mat.end();
 
-                if token_rule.kind == TokenType::IgnoreToken {
-                    self.text = self.text.as_str()[mat_end..].to_string();
-                    return Some(Token {
-                        kind: token_rule.kind,
-                        value: Literal::Empty,
-                    });
-                }
+                match token_rule.kind {
+                    TokenType::IgnoreToken | TokenType::Semicolon => {
+                        self.text = self.text.as_str()[mat_end..].to_string();
+                        return Some(Token {
+                            kind: token_rule.kind,
+                            value: Literal::Empty,
+                        });
+                    }
 
-                if token_rule.kind == TokenType::NumberLiteral {
-                    let value = self.text.as_str()[..mat_end].to_string();
-                    let ret = Some(Token {
-                        kind: token_rule.kind,
-                        value: Literal::Number(value.parse::<i64>().unwrap()),
-                    });
+                    TokenType::NumberLiteral => {
+                        let value = self.text.as_str()[..mat_end].to_string();
+                        let ret = Some(Token {
+                            kind: token_rule.kind,
+                            value: Literal::Number(value.parse::<i64>().unwrap()),
+                        });
+                        self.text = self.text.as_str()[mat_end..].to_string();
+                        return ret;
+                    }
 
-                    self.text = self.text.as_str()[mat_end..].to_string();
-                    return ret;
-                }
+                    TokenType::StringLiteral => {
+                        let begin_quote = mat_start + 1;
+                        let end_quote = mat_end - 1;
+                        let value = self.text.as_str()[begin_quote..end_quote].to_string();
 
-                if token_rule.kind == TokenType::StringLiteral {
-                    let begin_quote = mat_start + 1;
-                    let end_quote = mat_end - 1;
-                    let value = self.text.as_str()[begin_quote..end_quote].to_string();
+                        let ret = Some(Token {
+                            kind: token_rule.kind,
+                            value: Literal::String(value),
+                        });
 
-                    let ret = Some(Token {
-                        kind: token_rule.kind,
-                        value: Literal::String(value),
-                    });
-
-                    self.text = self.text.as_str()[mat_end..].to_string();
-                    return ret;
+                        self.text = self.text.as_str()[mat_end..].to_string();
+                        return ret;
+                    }
                 }
             }
         }
@@ -243,5 +244,25 @@ mod tests {
             value: Literal::String(String::from("hello")),
         };
         assert_eq!(actual3, expected3);
+    }
+
+    #[test]
+    fn semicolon() {
+        let program = "' hello';";
+        let mut tokenizer = Tokenizer::new(program.to_string());
+        let actual1 = tokenizer.get_next_token().unwrap();
+        let expected1 = Token {
+            kind: TokenType::StringLiteral,
+            value: Literal::String(String::from(" hello")),
+        };
+        assert_eq!(actual1, expected1);
+
+        assert_eq!(
+            tokenizer.get_next_token().unwrap(),
+            Token {
+                kind: TokenType::Semicolon,
+                value: Literal::Empty,
+            }
+        );
     }
 }
