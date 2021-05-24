@@ -1,8 +1,5 @@
 #![allow(dead_code)]
-use crate::tokenizer::{Token, Tokenizer};
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ExpressionStatement {}
+use crate::tokenizer::{Token, TokenType, Tokenizer};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Program {
@@ -14,12 +11,22 @@ pub struct Program {
 pub enum NodeType {
     Program,
     ExpressionStatement,
+    EmptyStatement,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ExpressionStatement {}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EmptyStatement {
+    node_type: NodeType,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Node {
     Program,
     ExpressionStatement(ExpressionStatement),
+    EmptyStatement(EmptyStatement),
 }
 
 pub struct Parser {
@@ -59,8 +66,12 @@ impl Parser {
      *   | StatementList Statement
      *   ;
      */
-    fn statement_list(&self) -> Vec<Node> {
-        let statements = Vec::new();
+    fn statement_list(&mut self) -> Vec<Node> {
+        let mut statements = Vec::new();
+
+        while !self.lookahead.is_none() {
+            statements.push(self.statement())
+        }
 
         statements
     }
@@ -71,8 +82,18 @@ impl Parser {
      *   | EmptyStatement
      *   ;
      */
-    fn statement(&self) {
-        //
+    fn statement(&mut self) -> Node {
+        let foo = self.lookahead.clone();
+        match foo.unwrap().kind {
+            TokenType::Semicolon => {
+                let node = self.empty_statement();
+                return Node::EmptyStatement(node);
+            }
+
+            TokenType::IgnoreToken | TokenType::NumberLiteral | TokenType::StringLiteral => {
+                panic!("Not implemented");
+            }
+        }
     }
 
     /**
@@ -126,12 +147,21 @@ impl Parser {
      *   : ';'
      *   ;
      */
-    fn empty_statement(&self) {
-        //
+    fn empty_statement(&mut self) -> EmptyStatement {
+        self.eat(TokenType::Semicolon);
+
+        EmptyStatement {
+            node_type: NodeType::EmptyStatement,
+        }
     }
 
-    fn eat(&self, token: Token) {
-        //
+    fn eat(&mut self, token_type: TokenType) {
+        let token = self.lookahead.as_ref().unwrap();
+        if token.kind != token_type {
+            panic!("Incorrect token type");
+        }
+
+        self.lookahead = self.tokenizer.get_next_token();
     }
 }
 
@@ -150,6 +180,18 @@ mod tests {
 
         assert_eq!(actual, expected);
     }
+    #[test]
+    fn empty_statement() {
+        let tokenizer = Tokenizer::new(";".to_string());
+        let mut parser = Parser::new(tokenizer);
+        let actual = parser.parse();
+        let expected = Program {
+            node_type: NodeType::Program,
+            body: vec![Node::EmptyStatement(EmptyStatement {
+                node_type: NodeType::EmptyStatement,
+            })],
+        };
 
-    fn numeric_literal() {}
+        assert_eq!(actual, expected);
+    }
 }
