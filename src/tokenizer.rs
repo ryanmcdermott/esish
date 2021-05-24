@@ -146,73 +146,71 @@ impl Tokenizer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn expect_tokens(program: String, tokens: Vec<Token>) {
+        let mut tokenizer = Tokenizer::new(program);
+
+        for token in tokens.iter() {
+            assert_eq!(tokenizer.get_next_token().unwrap(), *token);
+        }
+    }
     #[test]
     fn numeric_literal() {
-        let program = "42";
-        let mut tokenizer = Tokenizer::new(program.to_string());
-        let actual = tokenizer.get_next_token().unwrap();
-        let expected = Token {
-            kind: TokenType::NumberLiteral,
-            value: Literal::Number(42),
-        };
-
-        assert_eq!(actual, expected);
+        expect_tokens(
+            String::from("42"),
+            vec![Token {
+                kind: TokenType::NumberLiteral,
+                value: Literal::Number(42),
+            }],
+        );
     }
     #[test]
     fn string_literal() {
-        let program = "'hello'";
-        let mut tokenizer = Tokenizer::new(program.to_string());
-        let actual = tokenizer.get_next_token().unwrap();
-        let expected = Token {
-            kind: TokenType::StringLiteral,
-            value: Literal::String(String::from("hello")),
-        };
-
-        assert_eq!(actual, expected);
+        expect_tokens(
+            String::from("'hello'"),
+            vec![Token {
+                kind: TokenType::StringLiteral,
+                value: Literal::String(String::from("hello")),
+            }],
+        );
     }
     #[test]
     fn ignore_whitespace() {
-        let program = "   ' hello'";
-        let mut tokenizer = Tokenizer::new(program.to_string());
-        let actual1 = tokenizer.get_next_token().unwrap();
-        let expected1 = Token {
-            kind: TokenType::IgnoreToken,
-            value: Literal::Empty,
-        };
-        assert_eq!(actual1, expected1);
-
-        let actual2 = tokenizer.get_next_token().unwrap();
-        let expected2 = Token {
-            kind: TokenType::StringLiteral,
-            value: Literal::String(String::from(" hello")),
-        };
-        assert_eq!(actual2, expected2);
+        expect_tokens(
+            String::from("    ' hello'"),
+            vec![
+                Token {
+                    kind: TokenType::IgnoreToken,
+                    value: Literal::Empty,
+                },
+                Token {
+                    kind: TokenType::StringLiteral,
+                    value: Literal::String(String::from(" hello")),
+                },
+            ],
+        );
     }
     #[test]
     fn ignore_single_line_comment() {
         let program = r#"// Single line comment
         'hello'"#;
-        let mut tokenizer = Tokenizer::new(program.to_string());
-        let actual1 = tokenizer.get_next_token().unwrap();
-        let expected1 = Token {
-            kind: TokenType::IgnoreToken,
-            value: Literal::Empty,
-        };
-        assert_eq!(actual1, expected1);
-
-        let actual2 = tokenizer.get_next_token().unwrap();
-        let expected2 = Token {
-            kind: TokenType::IgnoreToken,
-            value: Literal::Empty,
-        };
-        assert_eq!(actual2, expected2);
-
-        let actual3 = tokenizer.get_next_token().unwrap();
-        let expected3 = Token {
-            kind: TokenType::StringLiteral,
-            value: Literal::String(String::from("hello")),
-        };
-        assert_eq!(actual3, expected3);
+        expect_tokens(
+            String::from(program),
+            vec![
+                Token {
+                    kind: TokenType::IgnoreToken,
+                    value: Literal::Empty,
+                },
+                Token {
+                    kind: TokenType::IgnoreToken,
+                    value: Literal::Empty,
+                },
+                Token {
+                    kind: TokenType::StringLiteral,
+                    value: Literal::String(String::from("hello")),
+                },
+            ],
+        );
     }
 
     #[test]
@@ -223,46 +221,39 @@ mod tests {
          * comment
          */
         'hello'"#;
-        let mut tokenizer = Tokenizer::new(program.to_string());
-        let actual1 = tokenizer.get_next_token().unwrap();
-        let expected1 = Token {
-            kind: TokenType::IgnoreToken,
-            value: Literal::Empty,
-        };
-        assert_eq!(actual1, expected1);
-
-        let actual2 = tokenizer.get_next_token().unwrap();
-        let expected2 = Token {
-            kind: TokenType::IgnoreToken,
-            value: Literal::Empty,
-        };
-        assert_eq!(actual2, expected2);
-
-        let actual3 = tokenizer.get_next_token().unwrap();
-        let expected3 = Token {
-            kind: TokenType::StringLiteral,
-            value: Literal::String(String::from("hello")),
-        };
-        assert_eq!(actual3, expected3);
+        expect_tokens(
+            String::from(program),
+            vec![
+                Token {
+                    kind: TokenType::IgnoreToken,
+                    value: Literal::Empty,
+                },
+                Token {
+                    kind: TokenType::IgnoreToken,
+                    value: Literal::Empty,
+                },
+                Token {
+                    kind: TokenType::StringLiteral,
+                    value: Literal::String(String::from("hello")),
+                },
+            ],
+        );
     }
 
     #[test]
     fn semicolon() {
-        let program = "' hello';";
-        let mut tokenizer = Tokenizer::new(program.to_string());
-        let actual1 = tokenizer.get_next_token().unwrap();
-        let expected1 = Token {
-            kind: TokenType::StringLiteral,
-            value: Literal::String(String::from(" hello")),
-        };
-        assert_eq!(actual1, expected1);
-
-        assert_eq!(
-            tokenizer.get_next_token().unwrap(),
-            Token {
-                kind: TokenType::Semicolon,
-                value: Literal::Empty,
-            }
+        expect_tokens(
+            String::from("' hello';"),
+            vec![
+                Token {
+                    kind: TokenType::StringLiteral,
+                    value: Literal::String(String::from(" hello")),
+                },
+                Token {
+                    kind: TokenType::Semicolon,
+                    value: Literal::Empty,
+                },
+            ],
         );
     }
 }
