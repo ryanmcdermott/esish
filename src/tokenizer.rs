@@ -8,6 +8,8 @@ pub enum TokenType {
     StringLiteral,
     IgnoreToken,
     Semicolon,
+    SimpleAssignment,
+    ComplexAssignment,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
