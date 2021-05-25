@@ -30,15 +30,72 @@ struct TokenRule {
 }
 
 lazy_static! {
+    // --------------------------------------------------------------------------------
     // Token Regular Expressions.
+    // --------------------------------------------------------------------------------
+    // Literals
     static ref NUMBER_REGEX: Regex = Regex::new(r"^\d+").unwrap();
     static ref STRING_REGEX: Regex = Regex::new(r"^'[^']*'").unwrap();
+
+    // Symbols and delimiters
+    static ref SEMICOLON_REGEX: Regex = Regex::new(r"^;").unwrap();
+    static ref OPEN_BLOCK_REGEX: Regex = Regex::new(r"^{").unwrap();
+    static ref CLOSE_BLOCK_REGEX: Regex = Regex::new(r"^}").unwrap();
+    static ref OPEN_PAREN_REGEX: Regex = Regex::new(r"^\(").unwrap();
+    static ref CLOSE_PAREN_REGEX: Regex = Regex::new(r"^\)").unwrap();
+    static ref COMMA_REGEX: Regex = Regex::new(r"^,").unwrap();
+    static ref POINT_REGEX: Regex = Regex::new(r"^\.").unwrap();
+    static ref OPEN_SQUARE_BRACKET_REGEX: Regex = Regex::new(r"^\[").unwrap();
+    static ref CLOSE_SQUARE_BRACKET_REGEX: Regex = Regex::new(r"^\]").unwrap();
+
+    // Keywords
+    static ref KEYWORD_LET_REGEX: Regex = Regex::new(r"^\blet\b").unwrap();
+    static ref KEYWORD_IF_REGEX: Regex = Regex::new(r"^\bif\b").unwrap();
+    static ref KEYWORD_ELSE_REGEX: Regex = Regex::new(r"^\belse\b").unwrap();
+    static ref KEYWORD_TRUE_REGEX: Regex = Regex::new(r"^\btrue\b").unwrap();
+    static ref KEYWORD_FALSE_REGEX: Regex = Regex::new(r"^\bfalse\b").unwrap();
+    static ref KEYWORD_NULL_REGEX: Regex = Regex::new(r"^\bnull\b").unwrap();
+    static ref KEYWORD_WHILE_REGEX: Regex = Regex::new(r"^\bwhile\b").unwrap();
+    static ref KEYWORD_DO_REGEX: Regex = Regex::new(r"^\bdo\b").unwrap();
+    static ref KEYWORD_FOR_REGEX: Regex = Regex::new(r"^\bfor\b").unwrap();
+    static ref KEYWORD_DEF_REGEX: Regex = Regex::new(r"^\bdef\b").unwrap();
+    static ref KEYWORD_RETURN_REGEX: Regex = Regex::new(r"^\breturn\b").unwrap();
+    static ref KEYWORD_CLASS_REGEX: Regex = Regex::new(r"^\bclass\b").unwrap();
+    static ref KEYWORD_EXTENDS_REGEX: Regex = Regex::new(r"^\bextends\b").unwrap();
+    static ref KEYWORD_SUPER_REGEX: Regex = Regex::new(r"^\bsuper\b").unwrap();
+    static ref KEYWORD_NEW_REGEX: Regex = Regex::new(r"^\bnew\b").unwrap();
+    static ref KEYWORD_THIS_REGEX: Regex = Regex::new(r"^\bthis\b").unwrap();
+
+    // Identifiers
+    static ref IDENTIFIER_REGEX: Regex = Regex::new(r"^\w+").unwrap();
+
+    // Equality operators: ==, !=
+    static ref EQUALITY_REGEX: Regex = Regex::new(r"^[=!]=").unwrap();
+
+    // Assignment operators: =, *=, /=, +=, -=
+    static ref SIMPLE_ASSIGN_REGEX: Regex = Regex::new(r"^=").unwrap();
+    static ref COMPLEX_ASSIGN_REGEX: Regex = Regex::new(r"^[-+*/]=").unwrap();
+
+    // Math operators: +, -
+    static ref ADD_REGEX: Regex = Regex::new(r"^[+-]").unwrap();
+    static ref MULTIPLY_REGEX: Regex = Regex::new(r"^[*/]").unwrap();
+
+    // Relational operators: >, >=, <, <=
+    static ref RELATIONAL_REGEX: Regex = Regex::new(r"^[<>]=?").unwrap();
+
+    // Logical operators: &&, ||
+    static ref LOGICAL_AND_REGEX: Regex = Regex::new(r"^&&").unwrap();
+    static ref LOGICAL_OR_REGEX: Regex = Regex::new(r"^\|\|").unwrap();
+    static ref LOGICAL_NOT_REGEX: Regex = Regex::new(r"^!").unwrap();
+
+    // Comments and whitespace.
+    static ref MULTI_LINE_COMMENT_REGEX: Regex = Regex::new(r"^/\*[\s\S]*?\*/").unwrap();
     static ref WHITESPACE_REGEX: Regex = Regex::new(r"^\s+").unwrap();
     static ref SINGLE_LINE_COMMENT_REGEX: Regex = Regex::new(r"^//.*").unwrap();
-    static ref MULTI_LINE_COMMENT_REGEX: Regex = Regex::new(r"^/\*[\s\S]*?\*/").unwrap();
-    static ref SEMICOLON_REGEX: Regex = Regex::new(r"^;").unwrap();
 
+    // --------------------------------------------------------------------------------
     // Token Rule definitions.
+    // --------------------------------------------------------------------------------
     static ref NUMBER_TOKEN_RULE: TokenRule = TokenRule {
         kind: TokenType::NumberLiteral,
         rule: &NUMBER_REGEX
