@@ -8,8 +8,40 @@ pub enum TokenType {
     StringLiteral,
     IgnoreToken,
     Semicolon,
+    OpenBlock,
+    CloseBlock,
+    OpenParen,
+    CloseParen,
+    Comma,
+    Point,
+    OpenSquareBracket,
+    CloseSquareBracket,
+    KeywordLet,
+    KeywordIf,
+    KeywordElse,
+    KeywordTrue,
+    KeywordFalse,
+    KeywordNull,
+    KeywordWhile,
+    KeywordDo,
+    KeywordFor,
+    KeywordDef,
+    KeywordReturn,
+    KeywordClass,
+    KeywordExtends,
+    KeywordSuper,
+    KeywordNew,
+    KeywordThis,
+    Identifier,
+    Equality,
     SimpleAssignment,
     ComplexAssignment,
+    OperatorAdd,
+    OperatorMultiply,
+    OperatorRelational,
+    OperatorLogicalAnd,
+    OperatorLogicalOr,
+    OperatorLogicalNot,
 }
 
 type Literal = String;
@@ -36,6 +68,11 @@ lazy_static! {
     // Literals
     static ref NUMBER_REGEX: Regex = Regex::new(r"^\d+").unwrap();
     static ref STRING_REGEX: Regex = Regex::new(r"^'[^']*'").unwrap();
+
+    // Comments and whitespace.
+    static ref MULTI_LINE_COMMENT_REGEX: Regex = Regex::new(r"^/\*[\s\S]*?\*/").unwrap();
+    static ref WHITESPACE_REGEX: Regex = Regex::new(r"^\s+").unwrap();
+    static ref SINGLE_LINE_COMMENT_REGEX: Regex = Regex::new(r"^//.*").unwrap();
 
     // Symbols and delimiters
     static ref SEMICOLON_REGEX: Regex = Regex::new(r"^;").unwrap();
@@ -88,14 +125,10 @@ lazy_static! {
     static ref LOGICAL_OR_REGEX: Regex = Regex::new(r"^\|\|").unwrap();
     static ref LOGICAL_NOT_REGEX: Regex = Regex::new(r"^!").unwrap();
 
-    // Comments and whitespace.
-    static ref MULTI_LINE_COMMENT_REGEX: Regex = Regex::new(r"^/\*[\s\S]*?\*/").unwrap();
-    static ref WHITESPACE_REGEX: Regex = Regex::new(r"^\s+").unwrap();
-    static ref SINGLE_LINE_COMMENT_REGEX: Regex = Regex::new(r"^//.*").unwrap();
-
     // --------------------------------------------------------------------------------
     // Token Rule definitions.
     // --------------------------------------------------------------------------------
+    // Literals
     static ref NUMBER_TOKEN_RULE: TokenRule = TokenRule {
         kind: TokenType::NumberLiteral,
         rule: &NUMBER_REGEX
@@ -104,6 +137,8 @@ lazy_static! {
         kind: TokenType::StringLiteral,
         rule: &STRING_REGEX
     };
+
+    // Comments and whitespace.
     static ref IGNORE_WHITESPACE_TOKEN_RULE: TokenRule = TokenRule {
         kind: TokenType::IgnoreToken,
         rule: &WHITESPACE_REGEX
@@ -116,12 +151,17 @@ lazy_static! {
         kind: TokenType::IgnoreToken,
         rule: &MULTI_LINE_COMMENT_REGEX
     };
+
+    // Symbols and delimiters
     static ref SEMICOLON_TOKEN_RULE: TokenRule = TokenRule {
         kind: TokenType::Semicolon,
         rule: &SEMICOLON_REGEX
     };
 
-    // Token Rule set.
+
+    // --------------------------------------------------------------------------------
+    // Token Rule Set.
+    // --------------------------------------------------------------------------------
     static ref TOKEN_RULES: Vec<&'static TokenRule> = vec![
         &IGNORE_WHITESPACE_TOKEN_RULE,
         &IGNORE_SINGLE_LINE_COMMENT_TOKEN_RULE,
