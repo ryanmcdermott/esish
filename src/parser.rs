@@ -227,23 +227,33 @@ mod tests {
 
     #[test]
     fn empty_program() {
-        let tokenizer = Tokenizer::new("".to_string());
-        let mut parser = Parser::new(tokenizer);
-        let actual = parser.parse();
-        let expected = Node::Program(Program { body: vec![] });
+        let program = "".to_string();
+        let expected = r#"
+            {
+                "Program": {
+                  "body": []
+                }
+              }"#
+        .to_string();
 
-        assert_eq!(actual, expected);
+        expect_ast!(program, expected);
     }
     #[test]
     fn empty_statement() {
-        let tokenizer = Tokenizer::new(";".to_string());
-        let mut parser = Parser::new(tokenizer);
-        let actual = parser.parse();
-        let expected = Node::Program(Program {
-            body: vec![Node::EmptyStatement(EmptyStatement {})],
-        });
+        let program = ";".to_string();
+        let expected = r#"
+            {
+                "Program": {
+                  "body": [
+                    {
+                        "EmptyStatement": {}
+                    }
+                  ]
+                }
+              }"#
+        .to_string();
 
-        assert_eq!(actual, expected);
+        expect_ast!(program, expected);
     }
 
     #[test]
@@ -272,6 +282,6 @@ mod tests {
               }"#
         .to_string();
 
-        expect_ast!(program, expected, true);
+        expect_ast!(program, expected);
     }
 }
