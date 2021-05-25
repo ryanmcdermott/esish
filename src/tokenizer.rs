@@ -166,7 +166,7 @@ lazy_static! {
         rule: &CLOSE_BLOCK_REGEX
     };
     static ref OPEN_PAREN_TOKEN_RULE: TokenRule = TokenRule {
-        kind: TokenType::OpenBlock,
+        kind: TokenType::OpenParen,
         rule: &OPEN_PAREN_REGEX
     };
     static ref CLOSE_PAREN_TOKEN_RULE: TokenRule = TokenRule {
@@ -196,6 +196,71 @@ lazy_static! {
     // };
 
     // Keywords
+    static ref KEYWORD_LET_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordLet,
+        rule: &KEYWORD_LET_REGEX
+    };
+    static ref KEYWORD_IF_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordIf,
+        rule: &KEYWORD_IF_REGEX
+    };
+    static ref KEYWORD_ELSE_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordElse,
+        rule: &KEYWORD_ELSE_REGEX
+    };
+    static ref KEYWORD_TRUE_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordTrue,
+        rule: &KEYWORD_TRUE_REGEX
+    };
+    static ref KEYWORD_FALSE_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordFalse,
+        rule: &KEYWORD_FALSE_REGEX
+    };
+    static ref KEYWORD_NULL_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordNull,
+        rule: &KEYWORD_NULL_REGEX
+    };
+    static ref KEYWORD_WHILE_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordWhile,
+        rule: &KEYWORD_WHILE_REGEX
+    };
+    static ref KEYWORD_DO_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordDo,
+        rule: &KEYWORD_DO_REGEX
+    };
+    static ref KEYWORD_FOR_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordFor,
+        rule: &KEYWORD_FOR_REGEX
+    };
+    static ref KEYWORD_DEF_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordDef,
+        rule: &KEYWORD_DEF_REGEX
+    };
+    static ref KEYWORD_RETURN_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordReturn,
+        rule: &KEYWORD_RETURN_REGEX
+    };
+    static ref KEYWORD_CLASS_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordClass,
+        rule: &KEYWORD_CLASS_REGEX
+    };
+    static ref KEYWORD_EXTENDS_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordExtends,
+        rule: &KEYWORD_EXTENDS_REGEX
+    };
+    static ref KEYWORD_SUPER_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordSuper,
+        rule: &KEYWORD_SUPER_REGEX
+    };
+    static ref KEYWORD_NEW_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordNew,
+        rule: &KEYWORD_NEW_REGEX
+    };
+    static ref KEYWORD_THIS_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::KeywordThis,
+        rule: &KEYWORD_THIS_REGEX
+    };
+
 
     // Identifiers
 
@@ -227,6 +292,22 @@ lazy_static! {
         &POINT_TOKEN_RULE,
         &OPEN_SQUARE_BRACKET_TOKEN_RULE,
         &CLOSE_SQUARE_BRACKET_TOKEN_RULE,
+        &KEYWORD_LET_TOKEN_RULE,
+        &KEYWORD_IF_TOKEN_RULE,
+        &KEYWORD_ELSE_TOKEN_RULE,
+        &KEYWORD_TRUE_TOKEN_RULE,
+        &KEYWORD_FALSE_TOKEN_RULE,
+        &KEYWORD_NULL_TOKEN_RULE,
+        &KEYWORD_WHILE_TOKEN_RULE,
+        &KEYWORD_DO_TOKEN_RULE,
+        &KEYWORD_FOR_TOKEN_RULE,
+        &KEYWORD_DEF_TOKEN_RULE,
+        &KEYWORD_RETURN_TOKEN_RULE,
+        &KEYWORD_CLASS_TOKEN_RULE,
+        &KEYWORD_EXTENDS_TOKEN_RULE,
+        &KEYWORD_SUPER_TOKEN_RULE,
+        &KEYWORD_NEW_TOKEN_RULE,
+        &KEYWORD_THIS_TOKEN_RULE,
         // &,
     ];
 }
