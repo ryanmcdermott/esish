@@ -195,14 +195,14 @@ impl Parser {
 mod tests {
     use super::*;
 
-    fn expect_ast(program: String, expected: String, should_print_actual: bool) {
+    fn _expect_ast(program: String, expected: String, should_pretty_print_actual: bool) {
         let tokenizer = Tokenizer::new(program);
         let mut parser = Parser::new(tokenizer);
         let parse_tree = parser.parse();
         let mut actual_ast = serde_json::to_string_pretty(&parse_tree).unwrap();
 
-        if should_print_actual {
-            println!("{}", actual_ast);
+        if should_pretty_print_actual {
+            println!("Actual AST: \n {} \n\n\n\n", actual_ast);
         }
 
         actual_ast = str::replace(actual_ast.as_str(), "\n", "");
@@ -214,6 +214,15 @@ mod tests {
         expected_ast = str::replace(expected_ast.as_str(), "\t", "");
 
         assert_eq!(expected_ast, actual_ast);
+    }
+
+    macro_rules! expect_ast {
+        ($program:ident, $expected:ident) => {
+            _expect_ast($program, $expected, false)
+        };
+        ($program:ident, $expected:ident, $should_pretty_print_actual:expr) => {
+            _expect_ast($program, $expected, true)
+        };
     }
 
     #[test]
@@ -263,6 +272,6 @@ mod tests {
               }"#
         .to_string();
 
-        expect_ast(program, expected, false);
+        expect_ast!(program, expected, true);
     }
 }
