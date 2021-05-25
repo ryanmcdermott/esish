@@ -76,8 +76,8 @@ lazy_static! {
 
     // Symbols and delimiters
     static ref SEMICOLON_REGEX: Regex = Regex::new(r"^;").unwrap();
-    static ref OPEN_BLOCK_REGEX: Regex = Regex::new(r"^{").unwrap();
-    static ref CLOSE_BLOCK_REGEX: Regex = Regex::new(r"^}").unwrap();
+    static ref OPEN_BLOCK_REGEX: Regex = Regex::new(r"^\{").unwrap();
+    static ref CLOSE_BLOCK_REGEX: Regex = Regex::new(r"^\}").unwrap();
     static ref OPEN_PAREN_REGEX: Regex = Regex::new(r"^\(").unwrap();
     static ref CLOSE_PAREN_REGEX: Regex = Regex::new(r"^\)").unwrap();
     static ref COMMA_REGEX: Regex = Regex::new(r"^,").unwrap();
@@ -157,7 +157,57 @@ lazy_static! {
         kind: TokenType::Semicolon,
         rule: &SEMICOLON_REGEX
     };
+    static ref OPEN_BLOCK_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::OpenBlock,
+        rule: &OPEN_BLOCK_REGEX
+    };
+    static ref CLOSE_BLOCK_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::CloseBlock,
+        rule: &CLOSE_BLOCK_REGEX
+    };
+    static ref OPEN_PAREN_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::OpenBlock,
+        rule: &OPEN_PAREN_REGEX
+    };
+    static ref CLOSE_PAREN_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::CloseParen,
+        rule: &CLOSE_PAREN_REGEX
+    };
+    static ref COMMA_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::Comma,
+        rule: &COMMA_REGEX
+    };
+    static ref POINT_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::Point,
+        rule: &POINT_REGEX
+    };
+    static ref OPEN_SQUARE_BRACKET_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::OpenSquareBracket,
+        rule: &OPEN_SQUARE_BRACKET_REGEX
+    };
+    static ref CLOSE_SQUARE_BRACKET_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::CloseSquareBracket,
+        rule: &CLOSE_SQUARE_BRACKET_REGEX
+    };
 
+    // static ref _TOKEN_RULE: TokenRule = TokenRule {
+    //     kind: TokenType::,
+    //     rule: &_REGEX
+    // };
+
+    // Keywords
+
+    // Identifiers
+
+    // Equality operators: ==, !=
+
+    // Assignment operators: =, *=, /=, +=, -=
+
+    // Math operators: +, -
+
+    // Relational operators: >, >=, <, <=
+
+    // Logical operators: &&, ||
 
     // --------------------------------------------------------------------------------
     // Token Rule Set.
@@ -168,7 +218,16 @@ lazy_static! {
         &IGNORE_MULTI_LINE_COMMENT_TOKEN_RULE,
         &NUMBER_TOKEN_RULE,
         &STRING_TOKEN_RULE,
-        &SEMICOLON_TOKEN_RULE
+        &SEMICOLON_TOKEN_RULE,
+        &OPEN_BLOCK_TOKEN_RULE,
+        &CLOSE_BLOCK_TOKEN_RULE,
+        &OPEN_PAREN_TOKEN_RULE,
+        &CLOSE_PAREN_TOKEN_RULE,
+        &COMMA_TOKEN_RULE,
+        &POINT_TOKEN_RULE,
+        &OPEN_SQUARE_BRACKET_TOKEN_RULE,
+        &CLOSE_SQUARE_BRACKET_TOKEN_RULE,
+        // &,
     ];
 }
 
