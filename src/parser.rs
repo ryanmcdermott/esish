@@ -1,42 +1,42 @@
 #![allow(dead_code)]
 use crate::tokenizer::{Token, TokenType, Tokenizer};
+use serde::Serialize;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Program {
     body: Vec<Node>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct EmptyStatement {}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct NumericLiteral {
     value: i64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct StringLiteral {
     value: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Literal {
     NumericLiteral(NumericLiteral),
     StringLiteral(StringLiteral),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Expression {
     Literal(Literal),
-    // TODO AssignmentExpression
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct ExpressionStatement {
     expression: Expression,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Node {
     Program(Program),
     EmptyStatement(EmptyStatement),
@@ -194,6 +194,28 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn expect_ast(program: String, expected: String, should_print_actual: bool) {
+        let tokenizer = Tokenizer::new(program);
+        let mut parser = Parser::new(tokenizer);
+        let parse_tree = parser.parse();
+        let mut actual_ast = serde_json::to_string_pretty(&parse_tree).unwrap();
+
+        if should_print_actual {
+            println!("{}", actual_ast);
+        }
+
+        actual_ast = str::replace(actual_ast.as_str(), "\n", "");
+        actual_ast = str::replace(actual_ast.as_str(), " ", "");
+        actual_ast = str::replace(actual_ast.as_str(), "\t", "");
+
+        let mut expected_ast = str::replace(expected.as_str(), "\n", "");
+        expected_ast = str::replace(expected_ast.as_str(), " ", "");
+        expected_ast = str::replace(expected_ast.as_str(), "\t", "");
+
+        assert_eq!(expected_ast, actual_ast);
+    }
+
     #[test]
     fn empty_program() {
         let tokenizer = Tokenizer::new("".to_string());
@@ -217,20 +239,30 @@ mod tests {
 
     #[test]
     fn expression_statement_numeric_literal() {
-        let tokenizer = Tokenizer::new("42;".to_string());
-        let mut parser = Parser::new(tokenizer);
-        let actual = parser.parse();
-        let expected = Node::Program(Program {
-            body: vec![
-                Node::ExpressionStatement(ExpressionStatement {
-                    expression: Expression::Literal(Literal::NumericLiteral(NumericLiteral {
-                        value: 42,
-                    })),
-                }),
-                Node::EmptyStatement(EmptyStatement {}),
-            ],
-        });
+        let program = "42;".to_string();
+        let expected = r#"
+            {
+                "Program": {
+                  "body": [
+                    {
+                      "ExpressionStatement": {
+                        "expression": {
+                          "Literal": {
+                            "NumericLiteral": {
+                              "value": 42
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "EmptyStatement": {}
+                    }
+                  ]
+                }
+              }"#
+        .to_string();
 
-        assert_eq!(actual, expected);
+        expect_ast(program, expected, false);
     }
 }
