@@ -1,8 +1,9 @@
 #![allow(dead_code)]
 use lazy_static::lazy_static;
 use regex::Regex;
+use serde::Serialize;
 
-#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Serialize)]
 pub enum TokenType {
     NumberLiteral,
     StringLiteral,

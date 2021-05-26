@@ -11,6 +11,11 @@ pub struct Program {
 pub struct EmptyStatement {}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct BlockStatement {
+    body: Vec<Node>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct NumericLiteral {
     value: i64,
 }
@@ -39,6 +44,7 @@ pub struct ExpressionStatement {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Node {
     Program(Program),
+    BlockStatement(BlockStatement),
     EmptyStatement(EmptyStatement),
     ExpressionStatement(ExpressionStatement),
 }
@@ -55,6 +61,17 @@ impl Parser {
             tokenizer: tokenizer,
             lookahead: lookahead,
         }
+    }
+
+    fn get_lookahead_token_str(&self) -> (String, String) {
+        let lookahead = self.lookahead.clone().unwrap();
+        let token_type = serde_json::to_string(&lookahead.kind).unwrap();
+        let mut token_value = String::from("None");
+
+        if !lookahead.value.is_none() {
+            token_value = lookahead.value.unwrap();
+        }
+        (token_type, token_value)
     }
 
     fn parse(&mut self) -> Node {
@@ -80,6 +97,15 @@ impl Parser {
         let mut statements = Vec::new();
 
         while !self.lookahead.is_none() {
+            let lookahead = self.lookahead.clone().unwrap();
+            if lookahead.kind == TokenType::IgnoreToken {
+                self.lookahead = self.tokenizer.get_next_token();
+                continue;
+            }
+
+            if lookahead.kind == TokenType::CloseBlock {
+                break;
+            }
             statements.push(self.statement())
         }
 
@@ -89,6 +115,7 @@ impl Parser {
     /**
      * Statement
      *   : ExpressionStatement
+     *   | BlockStatement
      *   | EmptyStatement
      *   ;
      */
@@ -99,10 +126,35 @@ impl Parser {
                 return Node::EmptyStatement(self.empty_statement());
             }
 
+            TokenType::OpenBlock => {
+                return Node::BlockStatement(self.block_statement());
+            }
+
             _ => {
                 return Node::ExpressionStatement(self.expression_statement());
             }
         }
+    }
+
+    /**
+     * BlockStatement
+     *   : '{' OptStatementList '}'
+     *   ;
+     */
+
+    fn block_statement(&mut self) -> BlockStatement {
+        self.eat(TokenType::OpenBlock);
+        let mut body = Vec::new();
+
+        let lookahead = self.lookahead.clone().unwrap();
+
+        if lookahead.kind != TokenType::CloseBlock {
+            body = self.statement_list();
+        }
+
+        self.eat(TokenType::CloseBlock);
+
+        BlockStatement { body: body }
     }
 
     /**
@@ -166,7 +218,20 @@ impl Parser {
 
                 return Literal::StringLiteral(literal);
             }
-            _ => panic!("Not implemented yet"),
+            _ => {
+                let lookahead = self.lookahead.clone().unwrap();
+                let token_type = serde_json::to_string(&lookahead.kind).unwrap();
+                let mut token_value = String::from("None");
+
+                if !lookahead.value.is_none() {
+                    token_value = lookahead.value.unwrap();
+                }
+
+                panic!(
+                    "Literal parse not implemented yet for \nToken type: {}\nToken value: {}",
+                    token_type, token_value
+                )
+            }
         }
     }
 
@@ -184,7 +249,11 @@ impl Parser {
     fn eat(&mut self, token_type: TokenType) {
         let token = self.lookahead.as_ref().unwrap();
         if token.kind != token_type {
-            panic!("Incorrect token type");
+            let (token_type, token_value) = self.get_lookahead_token_str();
+            panic!(
+                "Incorrect token type, for\nToken type: {}\nToken value: {}",
+                token_type, token_value
+            );
         }
 
         self.lookahead = self.tokenizer.get_next_token();
@@ -280,6 +349,47 @@ mod tests {
                   ]
                 }
               }"#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn block_statement() {
+        let program = r#"
+            {
+                42;
+            }
+        "#
+        .to_string();
+        let expected = r#"
+        {
+            "Program": {
+              "body": [
+                {
+                  "BlockStatement": {
+                    "body": [
+                      {
+                        "ExpressionStatement": {
+                          "expression": {
+                            "Literal": {
+                              "NumericLiteral": {
+                                "value": 42
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "EmptyStatement": {}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          } 
+          "#
         .to_string();
 
         expect_ast!(program, expected);
