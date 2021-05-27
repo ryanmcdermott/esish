@@ -191,11 +191,6 @@ lazy_static! {
         rule: &CLOSE_SQUARE_BRACKET_REGEX
     };
 
-    // static ref _TOKEN_RULE: TokenRule = TokenRule {
-    //     kind: TokenType::,
-    //     rule: &_REGEX
-    // };
-
     // Keywords
     static ref KEYWORD_LET_TOKEN_RULE: TokenRule = TokenRule {
         kind: TokenType::KeywordLet,
@@ -264,16 +259,56 @@ lazy_static! {
 
 
     // Identifiers
+     static ref IDENTIFIER_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::Identifier,
+        rule: &IDENTIFIER_REGEX
+    };
 
     // Equality operators: ==, !=
+     static ref EQUALITY_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::Equality,
+        rule: &EQUALITY_REGEX
+    };
 
     // Assignment operators: =, *=, /=, +=, -=
+     static ref SIMPLE_ASSIGN_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::SimpleAssignment,
+        rule: &SIMPLE_ASSIGN_REGEX
+    };
+    static ref COMPLEX_ASSIGN_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::ComplexAssignment,
+        rule: &COMPLEX_ASSIGN_REGEX
+    };
 
     // Math operators: +, -
+    static ref ADD_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::OperatorAdd,
+        rule: &ADD_REGEX
+    };
+    static ref MULTIPLY_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::OperatorMultiply,
+        rule: &MULTIPLY_REGEX
+    };
 
     // Relational operators: >, >=, <, <=
+    static ref RELATIONAL_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::OperatorRelational,
+        rule: &RELATIONAL_REGEX
+    };
 
-    // Logical operators: &&, ||
+    // Logical operators: &&, ||, !
+    static ref LOGICAL_AND_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::OperatorLogicalAnd,
+        rule: &LOGICAL_AND_REGEX
+    };
+    static ref LOGICAL_OR_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::OperatorLogicalOr,
+        rule: &LOGICAL_OR_REGEX
+    };
+    static ref LOGICAL_NOT_TOKEN_RULE: TokenRule = TokenRule {
+        kind: TokenType::OperatorLogicalNot,
+        rule: &LOGICAL_NOT_REGEX
+    };
 
     // --------------------------------------------------------------------------------
     // Token Rule Set.
@@ -309,7 +344,16 @@ lazy_static! {
         &KEYWORD_SUPER_TOKEN_RULE,
         &KEYWORD_NEW_TOKEN_RULE,
         &KEYWORD_THIS_TOKEN_RULE,
-        // &,
+        &IDENTIFIER_TOKEN_RULE,
+        &EQUALITY_TOKEN_RULE,
+        &SIMPLE_ASSIGN_TOKEN_RULE,
+        &COMPLEX_ASSIGN_TOKEN_RULE,
+        &ADD_TOKEN_RULE,
+        &MULTIPLY_TOKEN_RULE,
+        &RELATIONAL_TOKEN_RULE,
+        &LOGICAL_AND_TOKEN_RULE,
+        &LOGICAL_OR_TOKEN_RULE,
+        &LOGICAL_NOT_TOKEN_RULE
     ];
 }
 
