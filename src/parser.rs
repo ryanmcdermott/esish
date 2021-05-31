@@ -11,6 +11,9 @@ pub struct Program {
 pub struct EmptyStatement {}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct VariableStatement {}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct BlockStatement {
     body: Vec<Node>,
 }
@@ -117,6 +120,7 @@ impl Parser {
      *   : ExpressionStatement
      *   | BlockStatement
      *   | EmptyStatement
+     *   | VariableStatement
      *   ;
      */
     fn statement(&mut self) -> Node {
@@ -155,6 +159,15 @@ impl Parser {
         self.eat(TokenType::CloseBlock);
 
         BlockStatement { body: body }
+    }
+
+    /**
+     * VariableStatement
+     *   : 'let' VariableDeclarationList ';'
+     *   ;
+     */
+    fn variable_statement(&mut self) -> VariableStatement {
+        VariableStatement {}
     }
 
     /**
