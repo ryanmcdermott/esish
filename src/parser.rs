@@ -263,7 +263,7 @@ impl Parser {
      *   ;
      */
     fn assignment_expression(&mut self) -> Expression {
-        let left = self.literal();
+        let left = self.logical_or_expression();
 
         self.lookahead = self.tokenizer.get_next_token();
 
@@ -272,7 +272,7 @@ impl Parser {
         //     return left;
         // }
 
-        Expression::Literal(left)
+        left
     }
 
     /**
@@ -361,14 +361,64 @@ impl Parser {
         )
     }
 
+    fn left_hand_side_expression(&mut self) -> Expression {
+        self.primary_expression()
+    }
+
     fn logical_expression(
         &mut self,
         logical_expression_builder: LogicalExpressionBuilder,
         operator: TokenType,
     ) -> Expression {
-        Expression::Literal(Literal::StringLiteral(StringLiteral {
-            value: String::from(""),
-        }))
+        match logical_expression_builder {
+            LogicalExpressionBuilder::EqualityExpression => {
+                let lookahead = self.lookahead.clone().unwrap();
+                let mut left = self.equality_expression();
+
+                while lookahead.kind == operator {
+                    self.eat(operator);
+                    left = Expression::LogicalExpression(LogicalExpression {
+                        left: Box::new(left),
+                        right: Box::new(self.equality_expression()),
+                        operator: operator,
+                    })
+                }
+
+                return left;
+            }
+
+            LogicalExpressionBuilder::LogicalAndExpression => {
+                let lookahead = self.lookahead.clone().unwrap();
+                let mut left = self.logical_and_expression();
+
+                while lookahead.kind == operator {
+                    self.eat(operator);
+                    left = Expression::LogicalExpression(LogicalExpression {
+                        left: Box::new(left),
+                        right: Box::new(self.logical_and_expression()),
+                        operator: operator,
+                    })
+                }
+
+                return left;
+            }
+
+            LogicalExpressionBuilder::LogicalOrExpression => {
+                let lookahead = self.lookahead.clone().unwrap();
+                let mut left = self.logical_or_expression();
+
+                while lookahead.kind == operator {
+                    self.eat(operator);
+                    left = Expression::LogicalExpression(LogicalExpression {
+                        left: Box::new(left),
+                        right: Box::new(self.logical_or_expression()),
+                        operator: operator,
+                    })
+                }
+
+                return left;
+            }
+        }
     }
 
     fn binary_expression(
@@ -467,17 +517,16 @@ impl Parser {
      */
     fn unary_expression(&mut self) -> Expression {
         let mut operator: Option<TokenType> = None;
-        let lookahead = self.lookahead.clone();
+        let lookahead = self.lookahead.clone().unwrap();
 
-        match lookahead.unwrap().kind {
-            TokenType::OperatorAdd => {
-                self.eat(TokenType::OperatorAdd);
-                operator = Some(TokenType::OperatorAdd);
-            }
-            _ => {
-                self.eat(TokenType::OperatorLogicalNot);
-                operator = Some(TokenType::OperatorLogicalNot);
-            }
+        if lookahead.kind == TokenType::OperatorAdd {
+            self.eat(TokenType::OperatorAdd);
+            operator = Some(TokenType::OperatorAdd);
+        }
+
+        if lookahead.kind == TokenType::OperatorLogicalNot {
+            self.eat(TokenType::OperatorLogicalNot);
+            operator = Some(TokenType::OperatorLogicalNot);
         }
 
         if !operator.is_none() {
@@ -487,7 +536,7 @@ impl Parser {
             });
         }
 
-        return Expression::Literal(self.literal());
+        return self.left_hand_side_expression();
     }
 
     /**
@@ -616,6 +665,16 @@ impl Parser {
             || token_type == TokenType::KeywordNull;
     }
 
+    fn is_assignment(&self, token: &Option<Token>) -> bool {
+        if token.is_none() {
+            return false;
+        }
+        let token_type = token.clone().unwrap().kind;
+
+        return token_type == TokenType::SimpleAssignment
+            || token_type == TokenType::ComplexAssignment;
+    }
+
     fn is_operator(&self, token: &Option<Token>) -> bool {
         if token.is_none() {
             return false;
@@ -630,13 +689,15 @@ impl Parser {
             || token_type == TokenType::OperatorLogicalNot;
     }
 
-    fn eat(&mut self, token_type: TokenType) {
+    fn eat(&mut self, expected_token_type: TokenType) {
         let token = self.lookahead.as_ref().unwrap();
-        if token.kind != token_type {
+        let expected_token_type_str = serde_json::to_string(&expected_token_type).unwrap();
+
+        if token.kind != expected_token_type {
             let (token_type, token_value) = self.get_lookahead_token_str();
             panic!(
-                "Incorrect token type, for\nToken type: {}\nToken value: {}",
-                token_type, token_value
+                "Incorrect token type, for\nToken type: {}\nToken value: {}\n\n Expected token type: {}",
+                token_type, token_value, expected_token_type_str
             );
         }
 
