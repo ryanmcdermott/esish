@@ -11,7 +11,28 @@ pub struct Program {
 pub struct EmptyStatement {}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct VariableStatement {}
+pub struct Identifier {
+    name: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub enum LeftAssignment {
+    Identifier(Identifier),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct AssignmentExpression {}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct VariableDeclaration {
+    id: Identifier,
+    init: Option<AssignmentExpression>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct VariableStatement {
+    declarations: Vec<VariableDeclaration>,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct BlockStatement {
@@ -35,8 +56,48 @@ pub enum Literal {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct BinaryExpression {
+    left: Box<Expression>,
+    right: Box<Expression>,
+    operator: TokenType,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct LogicalExpression {
+    left: Box<Expression>,
+    right: Box<Expression>,
+    operator: TokenType,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct UnaryExpression {
+    argument: Box<Expression>,
+    operator: TokenType,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Expression {
     Literal(Literal),
+    Identifier(Identifier),
+    BinaryExpression(BinaryExpression),
+    UnaryExpression(UnaryExpression),
+    LogicalExpression(LogicalExpression),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub enum LogicalExpressionBuilder {
+    LogicalOrExpression,
+    LogicalAndExpression,
+    EqualityExpression,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub enum BinaryExpressionBuilder {
+    PrimaryExpression,
+    MultiplicativeExpression,
+    AdditiveExpression,
+    RelationalExpression,
+    UnaryExpression,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -50,7 +111,10 @@ pub enum Node {
     BlockStatement(BlockStatement),
     EmptyStatement(EmptyStatement),
     ExpressionStatement(ExpressionStatement),
+    VariableStatement(VariableStatement),
 }
+
+type BinaryExpressionFn = fn(&Parser) -> Expression;
 
 pub struct Parser {
     tokenizer: Tokenizer,
@@ -167,7 +231,9 @@ impl Parser {
      *   ;
      */
     fn variable_statement(&mut self) -> VariableStatement {
-        VariableStatement {}
+        VariableStatement {
+            declarations: vec![],
+        }
     }
 
     /**
@@ -192,7 +258,8 @@ impl Parser {
 
     /**
      * AssignmentExpression
-     *   : LeftHandSideExpression AssignmentOperator AssignmentExpression
+     *   : LogicalOrExpression
+     *   | LeftHandSideExpression AssignmentOperator AssignmentExpression
      *   ;
      */
     fn assignment_expression(&mut self) -> Expression {
@@ -206,6 +273,283 @@ impl Parser {
         // }
 
         Expression::Literal(left)
+    }
+
+    /**
+     * LogicalOrExpression
+     *   : LogicalAndExpression
+     *   | LogicalAndExpression LOGICAL_OR LogicalOrExpression
+     *   ;
+     *
+     *  &&
+     */
+    fn logical_or_expression(&mut self) -> Expression {
+        self.logical_expression(
+            LogicalExpressionBuilder::LogicalAndExpression,
+            TokenType::OperatorLogicalOr,
+        )
+    }
+
+    /**
+     * LogicalAndExpression
+     *   : EqualityExpression
+     *   | EqualityExpression LOGICAL_AND LogicalAndExpression
+     *   ;
+     *
+     *  &&
+     */
+    fn logical_and_expression(&mut self) -> Expression {
+        self.logical_expression(
+            LogicalExpressionBuilder::EqualityExpression,
+            TokenType::OperatorLogicalAnd,
+        )
+    }
+
+    /**
+     * EqualityExpression
+     *   : ReplationalExpression
+     *   | ReplationalExpression EQUALITY_OPERATOR EqualityExpression
+     *   ;
+     *
+     *  ==, !=
+     */
+    fn equality_expression(&mut self) -> Expression {
+        self.binary_expression(
+            BinaryExpressionBuilder::RelationalExpression,
+            TokenType::Equality,
+        )
+    }
+
+    /**
+     * RelationalExpression
+     *   : AdditiveExpression
+     *   | AdditiveExpression RELATIONAL_OPERATOR RelationalExpression
+     *   ;
+     *
+     *  >, >=, <, <=
+     */
+    fn relational_expression(&mut self) -> Expression {
+        self.binary_expression(
+            BinaryExpressionBuilder::AdditiveExpression,
+            TokenType::OperatorRelational,
+        )
+    }
+
+    /**
+     * AdditiveExpression
+     *   : MultiplicativeExpression
+     *   | AdditiveExpression ADDITIVE_OPERATOR MultiplicativeExpression
+     *   ;
+     */
+    fn additive_expression(&mut self) -> Expression {
+        self.binary_expression(
+            BinaryExpressionBuilder::MultiplicativeExpression,
+            TokenType::OperatorAdd,
+        )
+    }
+
+    /**
+     * MultiplicativeExpression
+     *   : UnaryExpression
+     *   | MultiplicativeExpression MULTIPLICATIVE_OPERATOR UnaryExpression
+     *   ;
+     */
+    fn multiplicative_expression(&mut self) -> Expression {
+        self.binary_expression(
+            BinaryExpressionBuilder::UnaryExpression,
+            TokenType::OperatorMultiply,
+        )
+    }
+
+    fn logical_expression(
+        &mut self,
+        logical_expression_builder: LogicalExpressionBuilder,
+        operator: TokenType,
+    ) -> Expression {
+        Expression::Literal(Literal::StringLiteral(StringLiteral {
+            value: String::from(""),
+        }))
+    }
+
+    fn binary_expression(
+        &mut self,
+        expression_builder: BinaryExpressionBuilder,
+        operator: TokenType,
+    ) -> Expression {
+        match expression_builder {
+            BinaryExpressionBuilder::AdditiveExpression => {
+                let lookahead = self.lookahead.clone().unwrap();
+                let mut left = self.additive_expression();
+
+                while lookahead.kind == operator {
+                    self.eat(operator);
+                    left = Expression::BinaryExpression(BinaryExpression {
+                        left: Box::new(left),
+                        right: Box::new(self.additive_expression()),
+                        operator: operator,
+                    })
+                }
+
+                return left;
+            }
+
+            BinaryExpressionBuilder::MultiplicativeExpression => {
+                let lookahead = self.lookahead.clone().unwrap();
+                let mut left = self.multiplicative_expression();
+
+                while lookahead.kind == operator {
+                    self.eat(operator);
+                    left = Expression::BinaryExpression(BinaryExpression {
+                        left: Box::new(left),
+                        right: Box::new(self.multiplicative_expression()),
+                        operator: operator,
+                    })
+                }
+
+                return left;
+            }
+
+            BinaryExpressionBuilder::PrimaryExpression => {
+                let lookahead = self.lookahead.clone().unwrap();
+                let mut left = self.primary_expression();
+
+                while lookahead.kind == operator {
+                    self.eat(operator);
+                    left = Expression::BinaryExpression(BinaryExpression {
+                        left: Box::new(left),
+                        right: Box::new(self.primary_expression()),
+                        operator: operator,
+                    })
+                }
+
+                return left;
+            }
+
+            BinaryExpressionBuilder::RelationalExpression => {
+                let lookahead = self.lookahead.clone().unwrap();
+                let mut left = self.relational_expression();
+
+                while lookahead.kind == operator {
+                    self.eat(operator);
+                    left = Expression::BinaryExpression(BinaryExpression {
+                        left: Box::new(left),
+                        right: Box::new(self.relational_expression()),
+                        operator: operator,
+                    })
+                }
+
+                return left;
+            }
+
+            BinaryExpressionBuilder::UnaryExpression => {
+                let lookahead = self.lookahead.clone().unwrap();
+                let mut left = self.unary_expression();
+
+                while lookahead.kind == operator {
+                    self.eat(operator);
+                    left = Expression::BinaryExpression(BinaryExpression {
+                        left: Box::new(left),
+                        right: Box::new(self.unary_expression()),
+                        operator: operator,
+                    })
+                }
+
+                return left;
+            }
+        }
+    }
+
+    /**
+     * UnaryExpression
+     *   : LeftHandSideExpression
+     *   | ADDITIVE_OPERATOR UnaryExpression
+     *   | LOGICAL_NOT UnaryExpression
+     */
+    fn unary_expression(&mut self) -> Expression {
+        let mut operator: Option<TokenType> = None;
+        let lookahead = self.lookahead.clone();
+
+        match lookahead.unwrap().kind {
+            TokenType::OperatorAdd => {
+                self.eat(TokenType::OperatorAdd);
+                operator = Some(TokenType::OperatorAdd);
+            }
+            _ => {
+                self.eat(TokenType::OperatorLogicalNot);
+                operator = Some(TokenType::OperatorLogicalNot);
+            }
+        }
+
+        if !operator.is_none() {
+            return Expression::UnaryExpression(UnaryExpression {
+                operator: operator.unwrap(),
+                argument: Box::new(self.unary_expression()),
+            });
+        }
+
+        return Expression::Literal(self.literal());
+    }
+
+    /**
+     * PrimaryExpression
+     *   : Literal
+     *   | ParenthesizedExpression
+     *   | Identifier
+     *   | LeftHandSideExpression
+     *   ;
+     */
+    fn primary_expression(&mut self) -> Expression {
+        let lookahead = self.lookahead.clone();
+        if self.is_literal(&lookahead) {
+            return Expression::Literal(self.literal());
+        }
+
+        let lookahead_kind = lookahead.unwrap().kind;
+
+        match lookahead_kind {
+            TokenType::OpenParen => {
+                return self.parenthesized_expression();
+            }
+
+            TokenType::Identifier => {
+                return Expression::Identifier(self.identifier());
+            }
+
+            _ => {
+                return self.primary_expression();
+            }
+        }
+    }
+
+    /**
+     * ParenthesizedExpression
+     *   : '(' Expression ')'
+     *   ;
+     */
+    fn parenthesized_expression(&mut self) -> Expression {
+        self.eat(TokenType::OpenParen);
+        let expression = self.expression();
+        self.eat(TokenType::CloseParen);
+
+        return expression;
+    }
+
+    /**
+     * Identifier
+     *   : IDENTIFIER
+     *   ;
+     */
+    fn identifier(&mut self) -> Identifier {
+        let lookahead: Token = self.lookahead.clone().unwrap();
+        self.eat(TokenType::Identifier);
+
+        let mut name = String::from("");
+
+        if !lookahead.value.is_none() {
+            name = lookahead.value.unwrap();
+        }
+
+        Identifier { name }
     }
 
     /**
@@ -257,6 +601,33 @@ impl Parser {
         self.eat(TokenType::Semicolon);
 
         EmptyStatement {}
+    }
+
+    fn is_literal(&self, token: &Option<Token>) -> bool {
+        if token.is_none() {
+            return false;
+        }
+        let token_type = token.clone().unwrap().kind;
+
+        return token_type == TokenType::NumberLiteral
+            || token_type == TokenType::StringLiteral
+            || token_type == TokenType::KeywordTrue
+            || token_type == TokenType::KeywordFalse
+            || token_type == TokenType::KeywordNull;
+    }
+
+    fn is_operator(&self, token: &Option<Token>) -> bool {
+        if token.is_none() {
+            return false;
+        }
+        let token_type = token.clone().unwrap().kind;
+
+        return token_type == TokenType::OperatorAdd
+            || token_type == TokenType::OperatorMultiply
+            || token_type == TokenType::OperatorRelational
+            || token_type == TokenType::OperatorLogicalAnd
+            || token_type == TokenType::OperatorLogicalOr
+            || token_type == TokenType::OperatorLogicalNot;
     }
 
     fn eat(&mut self, token_type: TokenType) {
