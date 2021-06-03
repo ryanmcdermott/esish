@@ -21,7 +21,11 @@ pub enum LeftAssignment {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct AssignmentExpression {}
+pub struct AssignmentExpression {
+    left: Box<Expression>,
+    right: Box<Expression>,
+    operator: TokenType,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct VariableDeclaration {
@@ -82,6 +86,7 @@ pub enum Expression {
     BinaryExpression(BinaryExpression),
     UnaryExpression(UnaryExpression),
     LogicalExpression(LogicalExpression),
+    AssignmentExpression(AssignmentExpression),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -267,12 +272,14 @@ impl Parser {
 
         self.lookahead = self.tokenizer.get_next_token();
 
-        // TODO: Handle actual assignments
-        // if self.lookahead.kind == TokenType::SimpleAssignment || self.lookahead.kind == TokenType::ComplexAssignment {
-        //     return left;
-        // }
-
-        left
+        if !self.is_operator(&self.lookahead) {
+            return left;
+        }
+        Expression::AssignmentExpression(AssignmentExpression {
+            left: Box::new(left),
+            right: Box::new(self.assignment_expression()),
+            operator: TokenType::SimpleAssignment,
+        })
     }
 
     /**
