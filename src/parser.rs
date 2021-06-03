@@ -44,6 +44,11 @@ pub struct BlockStatement {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct BooleanLiteral {
+    value: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct NumericLiteral {
     value: i64,
 }
@@ -57,6 +62,7 @@ pub struct StringLiteral {
 pub enum Literal {
     NumericLiteral(NumericLiteral),
     StringLiteral(StringLiteral),
+    BooleanLiteral(BooleanLiteral),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -631,6 +637,14 @@ impl Parser {
 
                 return Literal::StringLiteral(literal);
             }
+
+            TokenType::KeywordTrue | TokenType::KeywordFalse => {
+                let literal = BooleanLiteral {
+                    value: left.value.as_ref().unwrap().parse::<bool>().unwrap(),
+                };
+
+                return Literal::BooleanLiteral(literal);
+            }
             _ => {
                 let lookahead = self.lookahead.clone().unwrap();
                 let token_type = serde_json::to_string(&lookahead.kind).unwrap();
@@ -842,6 +856,40 @@ mod tests {
             }
           } 
           "#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn unary_expression() {
+        let program = "!true;".to_string();
+        let expected = r#"
+            {
+                "Program": {
+                  "body": [
+                    {
+                      "ExpressionStatement": {
+                        "expression": {
+                          "UnaryExpression": {
+                            "argument": {
+                              "Literal": {
+                                "BooleanLiteral": {
+                                  "value": true
+                                }
+                              }
+                            },
+                            "operator": "OperatorLogicalNot"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "EmptyStatement": {}
+                    }
+                  ]
+                }
+              }"#
         .to_string();
 
         expect_ast!(program, expected);
