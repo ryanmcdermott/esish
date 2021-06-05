@@ -276,11 +276,10 @@ impl Parser {
     fn assignment_expression(&mut self) -> Expression {
         let left = self.logical_or_expression();
 
-        self.lookahead = self.tokenizer.get_next_token();
-
-        if !self.is_operator(&self.lookahead) {
+        if !self.is_assignment(&self.lookahead) {
             return left;
         }
+
         Expression::AssignmentExpression(AssignmentExpression {
             left: Box::new(left),
             right: Box::new(self.assignment_expression()),
@@ -385,10 +384,9 @@ impl Parser {
     ) -> Expression {
         match logical_expression_builder {
             LogicalExpressionBuilder::EqualityExpression => {
-                let lookahead = self.lookahead.clone().unwrap();
                 let mut left = self.equality_expression();
 
-                while lookahead.kind == operator {
+                while self.lookahead.as_ref().unwrap().kind == operator {
                     self.eat(operator);
                     left = Expression::LogicalExpression(LogicalExpression {
                         left: Box::new(left),
@@ -401,10 +399,9 @@ impl Parser {
             }
 
             LogicalExpressionBuilder::LogicalAndExpression => {
-                let lookahead = self.lookahead.clone().unwrap();
                 let mut left = self.logical_and_expression();
 
-                while lookahead.kind == operator {
+                while self.lookahead.as_ref().unwrap().kind == operator {
                     self.eat(operator);
                     left = Expression::LogicalExpression(LogicalExpression {
                         left: Box::new(left),
@@ -417,10 +414,9 @@ impl Parser {
             }
 
             LogicalExpressionBuilder::LogicalOrExpression => {
-                let lookahead = self.lookahead.clone().unwrap();
                 let mut left = self.logical_or_expression();
 
-                while lookahead.kind == operator {
+                while self.lookahead.as_ref().unwrap().kind == operator {
                     self.eat(operator);
                     left = Expression::LogicalExpression(LogicalExpression {
                         left: Box::new(left),
@@ -441,14 +437,14 @@ impl Parser {
     ) -> Expression {
         match expression_builder {
             BinaryExpressionBuilder::AdditiveExpression => {
-                let lookahead = self.lookahead.clone().unwrap();
                 let mut left = self.additive_expression();
 
-                while lookahead.kind == operator {
+                while self.lookahead.as_ref().unwrap().kind == operator {
                     self.eat(operator);
+                    let right = self.additive_expression();
                     left = Expression::BinaryExpression(BinaryExpression {
                         left: Box::new(left),
-                        right: Box::new(self.additive_expression()),
+                        right: Box::new(right),
                         operator: operator,
                     })
                 }
@@ -457,10 +453,9 @@ impl Parser {
             }
 
             BinaryExpressionBuilder::MultiplicativeExpression => {
-                let lookahead = self.lookahead.clone().unwrap();
                 let mut left = self.multiplicative_expression();
 
-                while lookahead.kind == operator {
+                while self.lookahead.as_ref().unwrap().kind == operator {
                     self.eat(operator);
                     left = Expression::BinaryExpression(BinaryExpression {
                         left: Box::new(left),
@@ -473,10 +468,9 @@ impl Parser {
             }
 
             BinaryExpressionBuilder::PrimaryExpression => {
-                let lookahead = self.lookahead.clone().unwrap();
                 let mut left = self.primary_expression();
 
-                while lookahead.kind == operator {
+                while self.lookahead.as_ref().unwrap().kind == operator {
                     self.eat(operator);
                     left = Expression::BinaryExpression(BinaryExpression {
                         left: Box::new(left),
@@ -489,10 +483,9 @@ impl Parser {
             }
 
             BinaryExpressionBuilder::RelationalExpression => {
-                let lookahead = self.lookahead.clone().unwrap();
                 let mut left = self.relational_expression();
 
-                while lookahead.kind == operator {
+                while self.lookahead.as_ref().unwrap().kind == operator {
                     self.eat(operator);
                     left = Expression::BinaryExpression(BinaryExpression {
                         left: Box::new(left),
@@ -505,10 +498,9 @@ impl Parser {
             }
 
             BinaryExpressionBuilder::UnaryExpression => {
-                let lookahead = self.lookahead.clone().unwrap();
                 let mut left = self.unary_expression();
 
-                while lookahead.kind == operator {
+                while self.lookahead.as_ref().unwrap().kind == operator {
                     self.eat(operator);
                     left = Expression::BinaryExpression(BinaryExpression {
                         left: Box::new(left),
@@ -578,7 +570,7 @@ impl Parser {
             }
 
             _ => {
-                return self.primary_expression();
+                return self.left_hand_side_expression();
             }
         }
     }
@@ -621,7 +613,9 @@ impl Parser {
      *   ;
      */
     fn literal(&mut self) -> Literal {
-        let left = self.lookahead.as_ref().unwrap();
+        let left = self.lookahead.clone().unwrap();
+        self.eat(left.kind);
+
         match left.kind {
             TokenType::NumberLiteral => {
                 let literal = NumericLiteral {
@@ -893,5 +887,20 @@ mod tests {
         .to_string();
 
         expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn binary_expression_additive() {
+        let program = "2 + 3;".to_string();
+        let expected = r#"
+            {
+                "Program": {
+                  "body": [
+                  ]
+                }
+              }"#
+        .to_string();
+
+        expect_ast!(program, expected, true);
     }
 }
