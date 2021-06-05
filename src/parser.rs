@@ -1024,6 +1024,92 @@ mod tests {
     }
 
     #[test]
+    fn binary_expression_arith_precedence() {
+        let program = "(1 * (2 + 3)) + 4 + 5 * 6;".to_string();
+        let expected = r#"
+        {
+            "Program": {
+              "body": [
+                {
+                    "ExpressionStatement": {
+                      "expression": {
+                        "BinaryExpression": {
+                          "left": {
+                            "BinaryExpression": {
+                              "left": {
+                                "BinaryExpression": {
+                                  "left": {
+                                    "Literal": {
+                                      "NumericLiteral": {
+                                        "value": 1
+                                      }
+                                    }
+                                  },
+                                  "right": {
+                                    "BinaryExpression": {
+                                      "left": {
+                                        "Literal": {
+                                          "NumericLiteral": {
+                                            "value": 2
+                                          }
+                                        }
+                                      },
+                                      "right": {
+                                        "Literal": {
+                                          "NumericLiteral": {
+                                            "value": 3
+                                          }
+                                        }
+                                      },
+                                      "operator": "OperatorAdd"
+                                    }
+                                  },
+                                  "operator": "OperatorMultiply"
+                                }
+                              },
+                              "right": {
+                                "Literal": {
+                                  "NumericLiteral": {
+                                    "value": 4
+                                  }
+                                }
+                              },
+                              "operator": "OperatorAdd"
+                            }
+                          },
+                          "right": {
+                            "BinaryExpression": {
+                              "left": {
+                                "Literal": {
+                                  "NumericLiteral": {
+                                    "value": 5
+                                  }
+                                }
+                              },
+                              "right": {
+                                "Literal": {
+                                  "NumericLiteral": {
+                                    "value": 6
+                                  }
+                                }
+                              },
+                              "operator": "OperatorMultiply"
+                            }
+                          },
+                          "operator": "OperatorAdd"
+                        }
+                      }
+                    }
+                  }
+              ]
+            }
+          }"#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
     fn logical_expression_relational() {
         let program = "true || false;".to_string();
         let expected = r#"
