@@ -253,9 +253,13 @@ impl Parser {
      *   ;
      */
     fn expression_statement(&mut self) -> ExpressionStatement {
-        ExpressionStatement {
+        let exp = ExpressionStatement {
             expression: self.expression(),
-        }
+        };
+
+        self.eat(TokenType::Semicolon);
+
+        return exp;
     }
 
     /**
@@ -811,9 +815,6 @@ mod tests {
                           }
                         }
                       }
-                    },
-                    {
-                      "EmptyStatement": {}
                     }
                   ]
                 }
@@ -848,9 +849,6 @@ mod tests {
                             }
                           }
                         }
-                      },
-                      {
-                        "EmptyStatement": {}
                       }
                     ]
                   }
@@ -886,9 +884,6 @@ mod tests {
                           }
                         }
                       }
-                    },
-                    {
-                      "EmptyStatement": {}
                     }
                   ]
                 }
@@ -900,7 +895,7 @@ mod tests {
 
     #[test]
     fn binary_expression_additive() {
-        let program = "2 + 3".to_string();
+        let program = "2 + 3;".to_string();
         let expected = r#"
         {
             "Program": {
