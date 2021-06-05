@@ -30,7 +30,7 @@ pub struct AssignmentExpression {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct VariableDeclaration {
     id: Identifier,
-    init: Option<AssignmentExpression>,
+    init: Option<Expression>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -213,6 +213,10 @@ impl Parser {
                 return Node::BlockStatement(self.block_statement());
             }
 
+            TokenType::KeywordLet => {
+                return Node::VariableStatement(self.variable_statement());
+            }
+
             _ => {
                 return Node::ExpressionStatement(self.expression_statement());
             }
@@ -246,9 +250,59 @@ impl Parser {
      *   ;
      */
     fn variable_statement(&mut self) -> VariableStatement {
-        VariableStatement {
-            declarations: vec![],
+        self.eat(TokenType::KeywordLet);
+        let declarations = self.variable_declaration_list();
+        self.eat(TokenType::Semicolon);
+
+        VariableStatement { declarations }
+    }
+
+    /**
+     * VariableDeclarationList
+     *   : VariableDeclaration
+     *   | VariableDeclarationList ',' VariableDeclaration
+     *   ;
+     */
+    fn variable_declaration_list(&mut self) -> Vec<VariableDeclaration> {
+        let mut declarations = vec![];
+
+        loop {
+            declarations.push(self.variable_declaration());
+            if self.lookahead.is_none() || self.get_lookahead_kind() != TokenType::Comma {
+                break;
+            }
         }
+
+        return declarations;
+    }
+
+    /**
+     * VariableDeclaration
+     *   : Identifier OptVariableInitializer
+     *   ;
+     */
+    fn variable_declaration(&mut self) -> VariableDeclaration {
+        let id = self.identifier();
+        let mut init: Option<Expression> = None;
+
+        if self.lookahead.is_some()
+            && self.get_lookahead_kind() != TokenType::Comma
+            && self.get_lookahead_kind() != TokenType::Semicolon
+        {
+            init = Some(self.variable_init());
+        }
+
+        VariableDeclaration { id, init }
+    }
+
+    /**
+     * VariableInitializer
+     *   : SIMPLE_ASSIGN AssignmentExpression
+     *   ;
+     */
+    fn variable_init(&mut self) -> Expression {
+        self.eat(TokenType::SimpleAssignment);
+        return self.assignment_expression();
     }
 
     /**
@@ -268,7 +322,7 @@ impl Parser {
 
     /**
      * Expression
-     *   : Literal
+     *   : AssignmentExpression
      *   ;
      */
     fn expression(&mut self) -> Expression {
@@ -923,6 +977,39 @@ mod tests {
                     }
                   }
                 }
+              ]
+            }
+          }"#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn variable_assignment_literal() {
+        let program = "let a = 5;".to_string();
+        let expected = r#"
+        {
+            "Program": {
+              "body": [
+                {
+                    "VariableStatement": {
+                      "declarations": [
+                        {
+                          "id": {
+                            "name": "a"
+                          },
+                          "init": {
+                            "Literal": {
+                              "NumericLiteral": {
+                                "value": 5
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
               ]
             }
           }"#

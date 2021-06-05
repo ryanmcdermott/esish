@@ -529,4 +529,33 @@ mod tests {
             ],
         );
     }
+
+    #[test]
+    fn variable_assignment_literal() {
+        expect_tokens(
+            String::from("let a = 5;"),
+            vec![
+                Token {
+                    kind: TokenType::KeywordLet,
+                    value: Some(String::from("let")),
+                },
+                Token {
+                    kind: TokenType::Identifier,
+                    value: Some(String::from("a")),
+                },
+                Token {
+                    kind: TokenType::SimpleAssignment,
+                    value: Some(String::from("=")),
+                },
+                Token {
+                    kind: TokenType::NumberLiteral,
+                    value: Some(String::from("5")),
+                },
+                Token {
+                    kind: TokenType::Semicolon,
+                    value: Some(String::from(";")),
+                },
+            ],
+        );
+    }
 }
