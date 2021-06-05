@@ -504,4 +504,29 @@ mod tests {
             ],
         );
     }
+
+    #[test]
+    fn add() {
+        expect_tokens(
+            String::from("2 + 3;"),
+            vec![
+                Token {
+                    kind: TokenType::NumberLiteral,
+                    value: Some(String::from("2")),
+                },
+                Token {
+                    kind: TokenType::OperatorAdd,
+                    value: Some(String::from("+")),
+                },
+                Token {
+                    kind: TokenType::NumberLiteral,
+                    value: Some(String::from("3")),
+                },
+                Token {
+                    kind: TokenType::Semicolon,
+                    value: Some(String::from(";")),
+                },
+            ],
+        );
+    }
 }

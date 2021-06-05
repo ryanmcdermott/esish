@@ -386,7 +386,8 @@ impl Parser {
             LogicalExpressionBuilder::EqualityExpression => {
                 let mut left = self.equality_expression();
 
-                while self.lookahead.as_ref().unwrap().kind == operator {
+                while !self.lookahead.is_none() && self.lookahead.as_ref().unwrap().kind == operator
+                {
                     self.eat(operator);
                     left = Expression::LogicalExpression(LogicalExpression {
                         left: Box::new(left),
@@ -401,7 +402,8 @@ impl Parser {
             LogicalExpressionBuilder::LogicalAndExpression => {
                 let mut left = self.logical_and_expression();
 
-                while self.lookahead.as_ref().unwrap().kind == operator {
+                while !self.lookahead.is_none() && self.lookahead.as_ref().unwrap().kind == operator
+                {
                     self.eat(operator);
                     left = Expression::LogicalExpression(LogicalExpression {
                         left: Box::new(left),
@@ -416,7 +418,8 @@ impl Parser {
             LogicalExpressionBuilder::LogicalOrExpression => {
                 let mut left = self.logical_or_expression();
 
-                while self.lookahead.as_ref().unwrap().kind == operator {
+                while !self.lookahead.is_none() && self.lookahead.as_ref().unwrap().kind == operator
+                {
                     self.eat(operator);
                     left = Expression::LogicalExpression(LogicalExpression {
                         left: Box::new(left),
@@ -439,7 +442,8 @@ impl Parser {
             BinaryExpressionBuilder::AdditiveExpression => {
                 let mut left = self.additive_expression();
 
-                while self.lookahead.as_ref().unwrap().kind == operator {
+                while !self.lookahead.is_none() && self.lookahead.as_ref().unwrap().kind == operator
+                {
                     self.eat(operator);
                     let right = self.additive_expression();
                     left = Expression::BinaryExpression(BinaryExpression {
@@ -455,7 +459,8 @@ impl Parser {
             BinaryExpressionBuilder::MultiplicativeExpression => {
                 let mut left = self.multiplicative_expression();
 
-                while self.lookahead.as_ref().unwrap().kind == operator {
+                while !self.lookahead.is_none() && self.lookahead.as_ref().unwrap().kind == operator
+                {
                     self.eat(operator);
                     left = Expression::BinaryExpression(BinaryExpression {
                         left: Box::new(left),
@@ -470,7 +475,8 @@ impl Parser {
             BinaryExpressionBuilder::PrimaryExpression => {
                 let mut left = self.primary_expression();
 
-                while self.lookahead.as_ref().unwrap().kind == operator {
+                while !self.lookahead.is_none() && self.lookahead.as_ref().unwrap().kind == operator
+                {
                     self.eat(operator);
                     left = Expression::BinaryExpression(BinaryExpression {
                         left: Box::new(left),
@@ -485,7 +491,8 @@ impl Parser {
             BinaryExpressionBuilder::RelationalExpression => {
                 let mut left = self.relational_expression();
 
-                while self.lookahead.as_ref().unwrap().kind == operator {
+                while !self.lookahead.is_none() && self.lookahead.as_ref().unwrap().kind == operator
+                {
                     self.eat(operator);
                     left = Expression::BinaryExpression(BinaryExpression {
                         left: Box::new(left),
@@ -500,7 +507,8 @@ impl Parser {
             BinaryExpressionBuilder::UnaryExpression => {
                 let mut left = self.unary_expression();
 
-                while self.lookahead.as_ref().unwrap().kind == operator {
+                while !self.lookahead.is_none() && self.lookahead.as_ref().unwrap().kind == operator
+                {
                     self.eat(operator);
                     left = Expression::BinaryExpression(BinaryExpression {
                         left: Box::new(left),
@@ -894,14 +902,37 @@ mod tests {
     fn binary_expression_additive() {
         let program = "2 + 3".to_string();
         let expected = r#"
-            {
-                "Program": {
-                  "body": [
-                  ]
+        {
+            "Program": {
+              "body": [
+                {
+                  "ExpressionStatement": {
+                    "expression": {
+                      "BinaryExpression": {
+                        "left": {
+                          "Literal": {
+                            "NumericLiteral": {
+                              "value": 2
+                            }
+                          }
+                        },
+                        "right": {
+                          "Literal": {
+                            "NumericLiteral": {
+                              "value": 3
+                            }
+                          }
+                        },
+                        "operator": "OperatorAdd"
+                      }
+                    }
+                  }
                 }
-              }"#
+              ]
+            }
+          }"#
         .to_string();
 
-        expect_ast!(program, expected, true);
+        expect_ast!(program, expected);
     }
 }
