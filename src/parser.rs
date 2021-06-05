@@ -152,6 +152,10 @@ impl Parser {
         (token_type, token_value)
     }
 
+    fn get_lookahead_kind(&self) -> TokenType {
+        self.lookahead.as_ref().unwrap().kind
+    }
+
     fn parse(&mut self) -> Node {
         match &self.lookahead {
             None => {
@@ -534,14 +538,13 @@ impl Parser {
      */
     fn unary_expression(&mut self) -> Expression {
         let mut operator: Option<TokenType> = None;
-        let lookahead = self.lookahead.clone().unwrap();
 
-        if lookahead.kind == TokenType::OperatorAdd {
+        if self.get_lookahead_kind() == TokenType::OperatorAdd {
             self.eat(TokenType::OperatorAdd);
             operator = Some(TokenType::OperatorAdd);
         }
 
-        if lookahead.kind == TokenType::OperatorLogicalNot {
+        if self.get_lookahead_kind() == TokenType::OperatorLogicalNot {
             self.eat(TokenType::OperatorLogicalNot);
             operator = Some(TokenType::OperatorLogicalNot);
         }
@@ -565,14 +568,11 @@ impl Parser {
      *   ;
      */
     fn primary_expression(&mut self) -> Expression {
-        let lookahead = self.lookahead.clone();
-        if self.is_literal(&lookahead) {
+        if self.is_literal(&self.lookahead) {
             return Expression::Literal(self.literal());
         }
 
-        let lookahead_kind = lookahead.unwrap().kind;
-
-        match lookahead_kind {
+        match self.get_lookahead_kind() {
             TokenType::OpenParen => {
                 return self.parenthesized_expression();
             }
