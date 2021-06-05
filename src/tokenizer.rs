@@ -393,12 +393,8 @@ impl Tokenizer {
                         return ret;
                     }
                     TokenType::IgnoreToken => {
-                        let ret = Some(Token {
-                            kind: token_rule.kind,
-                            value: None,
-                        });
                         self.text = self.text.as_str()[mat_end..].to_string();
-                        return ret;
+                        return self.get_next_token();
                     }
                     _ => {
                         let value = self.text.as_str()[..mat_end].to_string();
@@ -456,16 +452,10 @@ mod tests {
     fn ignore_whitespace() {
         expect_tokens(
             String::from("    ' hello'"),
-            vec![
-                Token {
-                    kind: TokenType::IgnoreToken,
-                    value: None,
-                },
-                Token {
-                    kind: TokenType::StringLiteral,
-                    value: Some(String::from(" hello")),
-                },
-            ],
+            vec![Token {
+                kind: TokenType::StringLiteral,
+                value: Some(String::from(" hello")),
+            }],
         );
     }
     #[test]
@@ -474,20 +464,10 @@ mod tests {
         'hello'"#;
         expect_tokens(
             String::from(program),
-            vec![
-                Token {
-                    kind: TokenType::IgnoreToken,
-                    value: None,
-                },
-                Token {
-                    kind: TokenType::IgnoreToken,
-                    value: None,
-                },
-                Token {
-                    kind: TokenType::StringLiteral,
-                    value: Some(String::from("hello")),
-                },
-            ],
+            vec![Token {
+                kind: TokenType::StringLiteral,
+                value: Some(String::from("hello")),
+            }],
         );
     }
 
@@ -501,20 +481,10 @@ mod tests {
         'hello'"#;
         expect_tokens(
             String::from(program),
-            vec![
-                Token {
-                    kind: TokenType::IgnoreToken,
-                    value: None,
-                },
-                Token {
-                    kind: TokenType::IgnoreToken,
-                    value: None,
-                },
-                Token {
-                    kind: TokenType::StringLiteral,
-                    value: Some(String::from("hello")),
-                },
-            ],
+            vec![Token {
+                kind: TokenType::StringLiteral,
+                value: Some(String::from("hello")),
+            }],
         );
     }
 

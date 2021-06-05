@@ -610,6 +610,7 @@ impl Parser {
      * Literal
      *   : NumericLiteral
      *   | StringLiteral
+     *   | BooleanLiteral
      *   ;
      */
     fn literal(&mut self) -> Literal {
@@ -857,7 +858,7 @@ mod tests {
 
     #[test]
     fn unary_expression() {
-        let program = "!true;".to_string();
+        let program = " !true;".to_string();
         let expected = r#"
             {
                 "Program": {
@@ -891,7 +892,7 @@ mod tests {
 
     #[test]
     fn binary_expression_additive() {
-        let program = "2 + 3;".to_string();
+        let program = "2 + 3".to_string();
         let expected = r#"
             {
                 "Program": {
