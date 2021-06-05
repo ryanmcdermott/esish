@@ -986,6 +986,81 @@ mod tests {
     }
 
     #[test]
+    fn binary_expression_multiply() {
+        let program = "2 * 3;".to_string();
+        let expected = r#"
+        {
+            "Program": {
+              "body": [
+                {
+                  "ExpressionStatement": {
+                    "expression": {
+                      "BinaryExpression": {
+                        "left": {
+                          "Literal": {
+                            "NumericLiteral": {
+                              "value": 2
+                            }
+                          }
+                        },
+                        "right": {
+                          "Literal": {
+                            "NumericLiteral": {
+                              "value": 3
+                            }
+                          }
+                        },
+                        "operator": "OperatorMultiply"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }"#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn binary_expression_relational() {
+        let program = "true || false;".to_string();
+        let expected = r#"
+        {
+            "Program": {
+              "body": [
+                {
+                    "ExpressionStatement": {
+                      "expression": {
+                        "LogicalExpression": {
+                          "left": {
+                            "Literal": {
+                              "BooleanLiteral": {
+                                "value": true
+                              }
+                            }
+                          },
+                          "right": {
+                            "Literal": {
+                              "BooleanLiteral": {
+                                "value": false
+                              }
+                            }
+                          },
+                          "operator": "OperatorLogicalOr"
+                        }
+                      }
+                    }
+                  }
+              ]
+            }
+          }"#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
     fn variable_assignment_literal() {
         let program = "let a = 5;".to_string();
         let expected = r#"
@@ -1005,6 +1080,51 @@ mod tests {
                                 "value": 5
                               }
                             }
+                          }
+                        }
+                      ]
+                    }
+                  }
+              ]
+            }
+          }"#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn variable_assignment_bin_exp() {
+        let program = "let a = 2 + 3;".to_string();
+        let expected = r#"
+        {
+            "Program": {
+              "body": [
+                {
+                    "VariableStatement": {
+                      "declarations": [
+                        {
+                          "id": {
+                            "name": "a"
+                          },
+                          "init": {
+                            "BinaryExpression": {
+                                "left": {
+                                  "Literal": {
+                                    "NumericLiteral": {
+                                      "value": 2
+                                    }
+                                  }
+                                },
+                                "right": {
+                                  "Literal": {
+                                    "NumericLiteral": {
+                                      "value": 3
+                                    }
+                                  }
+                                },
+                                "operator": "OperatorAdd"
+                              }
                           }
                         }
                       ]
