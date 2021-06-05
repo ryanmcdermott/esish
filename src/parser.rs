@@ -1024,7 +1024,7 @@ mod tests {
     }
 
     #[test]
-    fn binary_expression_relational() {
+    fn logical_expression_relational() {
         let program = "true || false;".to_string();
         let expected = r#"
         {
