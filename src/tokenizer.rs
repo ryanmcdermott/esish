@@ -421,12 +421,19 @@ impl Tokenizer {
 mod tests {
     use super::*;
 
-    fn expect_tokens(program: String, tokens: Vec<Token>) {
+    fn expect_tokens(program: String, expected_tokens: Vec<Token>) {
         let mut tokenizer = Tokenizer::new(program);
+        let mut actual_tokens = vec![];
+        loop {
+            let token = tokenizer.get_next_token();
 
-        for token in tokens.iter() {
-            assert_eq!(tokenizer.get_next_token().unwrap(), *token);
+            if token.is_some() {
+                actual_tokens.push(token.unwrap());
+            } else {
+                break;
+            }
         }
+        assert_eq!(actual_tokens, expected_tokens);
     }
     #[test]
     fn numeric_literal() {
@@ -554,6 +561,115 @@ mod tests {
                 Token {
                     kind: TokenType::Semicolon,
                     value: Some(String::from(";")),
+                },
+            ],
+        );
+    }
+
+    #[test]
+    fn variable_assignment_expression() {
+        expect_tokens(
+            String::from("a = 5;"),
+            vec![
+                Token {
+                    kind: TokenType::Identifier,
+                    value: Some(String::from("a")),
+                },
+                Token {
+                    kind: TokenType::SimpleAssignment,
+                    value: Some(String::from("=")),
+                },
+                Token {
+                    kind: TokenType::NumberLiteral,
+                    value: Some(String::from("5")),
+                },
+                Token {
+                    kind: TokenType::Semicolon,
+                    value: Some(String::from(";")),
+                },
+            ],
+        );
+    }
+
+    #[test]
+    fn if_statement_assignment() {
+        let program = r#"
+        let a = 5;
+        if (a == 5) {
+            a = 6;
+        }
+        "#
+        .to_string();
+        expect_tokens(
+            program,
+            vec![
+                Token {
+                    kind: TokenType::KeywordLet,
+                    value: Some(String::from("let")),
+                },
+                Token {
+                    kind: TokenType::Identifier,
+                    value: Some(String::from("a")),
+                },
+                Token {
+                    kind: TokenType::SimpleAssignment,
+                    value: Some(String::from("=")),
+                },
+                Token {
+                    kind: TokenType::NumberLiteral,
+                    value: Some(String::from("5")),
+                },
+                Token {
+                    kind: TokenType::Semicolon,
+                    value: Some(String::from(";")),
+                },
+                Token {
+                    kind: TokenType::KeywordIf,
+                    value: Some(String::from("if")),
+                },
+                Token {
+                    kind: TokenType::OpenParen,
+                    value: Some(String::from("(")),
+                },
+                Token {
+                    kind: TokenType::Identifier,
+                    value: Some(String::from("a")),
+                },
+                Token {
+                    kind: TokenType::Equality,
+                    value: Some(String::from("==")),
+                },
+                Token {
+                    kind: TokenType::NumberLiteral,
+                    value: Some(String::from("5")),
+                },
+                Token {
+                    kind: TokenType::CloseParen,
+                    value: Some(String::from(")")),
+                },
+                Token {
+                    kind: TokenType::OpenBlock,
+                    value: Some(String::from("{")),
+                },
+                Token {
+                    kind: TokenType::Identifier,
+                    value: Some(String::from("a")),
+                },
+                Token {
+                    kind: TokenType::SimpleAssignment,
+                    value: Some(String::from("=")),
+                },
+                Token {
+                    kind: TokenType::NumberLiteral,
+                    value: Some(String::from("6")),
+                },
+                Token {
+                    kind: TokenType::Semicolon,
+                    value: Some(String::from(";")),
+                },
+                Token {
+                    kind: TokenType::CloseBlock,
+                    value: Some(String::from("}")),
                 },
             ],
         );

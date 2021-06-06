@@ -117,12 +117,20 @@ pub struct ExpressionStatement {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct IfStatement {
+    test: Expression,
+    consequent: Box<Node>,
+    alternate: Box<Option<Node>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Node {
     Program(Program),
     BlockStatement(BlockStatement),
     EmptyStatement(EmptyStatement),
     ExpressionStatement(ExpressionStatement),
     VariableStatement(VariableStatement),
+    IfStatement(IfStatement),
 }
 
 type BinaryExpressionFn = fn(&Parser) -> Expression;
@@ -178,13 +186,8 @@ impl Parser {
     fn statement_list(&mut self) -> Vec<Node> {
         let mut statements = Vec::new();
 
-        while !self.lookahead.is_none() {
+        while self.lookahead.is_some() {
             let lookahead = self.lookahead.clone().unwrap();
-            if lookahead.kind == TokenType::IgnoreToken {
-                self.lookahead = self.tokenizer.get_next_token();
-                continue;
-            }
-
             if lookahead.kind == TokenType::CloseBlock {
                 break;
             }
@@ -217,6 +220,10 @@ impl Parser {
                 return Node::VariableStatement(self.variable_statement());
             }
 
+            TokenType::KeywordIf => {
+                return Node::IfStatement(self.if_statement());
+            }
+
             _ => {
                 return Node::ExpressionStatement(self.expression_statement());
             }
@@ -231,11 +238,9 @@ impl Parser {
 
     fn block_statement(&mut self) -> BlockStatement {
         self.eat(TokenType::OpenBlock);
+
         let mut body = Vec::new();
-
-        let lookahead = self.lookahead.clone().unwrap();
-
-        if lookahead.kind != TokenType::CloseBlock {
+        if self.get_lookahead_kind() != TokenType::CloseBlock {
             body = self.statement_list();
         }
 
@@ -306,6 +311,32 @@ impl Parser {
     }
 
     /**
+     * IfStatement
+     *   : 'if' '(' Expression ')' Statement
+     *   | 'if' '(' Expression ')' Statement 'else' Statement
+     */
+    fn if_statement(&mut self) -> IfStatement {
+        self.eat(TokenType::KeywordIf);
+        self.eat(TokenType::OpenParen);
+        let test = self.expression();
+        self.eat(TokenType::CloseParen);
+
+        let consequent = Box::new(self.statement());
+        let mut alternate: Box<Option<Node>> = Box::new(None);
+
+        if self.lookahead.is_some() && self.get_lookahead_kind() == TokenType::KeywordElse {
+            self.eat(TokenType::KeywordElse);
+            alternate = Box::new(Some(self.statement()));
+        }
+
+        IfStatement {
+            test,
+            consequent,
+            alternate,
+        }
+    }
+
+    /**
      * ExpressionStatement
      *   : Expression ';'
      *   ;
@@ -340,6 +371,14 @@ impl Parser {
 
         if !self.is_assignment(&self.lookahead) {
             return left;
+        }
+
+        if self.get_lookahead_kind() == TokenType::SimpleAssignment {
+            self.eat(TokenType::SimpleAssignment);
+        }
+
+        if self.get_lookahead_kind() == TokenType::ComplexAssignment {
+            self.eat(TokenType::ComplexAssignment);
         }
 
         Expression::AssignmentExpression(AssignmentExpression {
@@ -1110,6 +1149,42 @@ mod tests {
     }
 
     #[test]
+    fn bin_exp_relational() {
+        let program = "a == 3;".to_string();
+        let expected = r#"
+        {
+            "Program": {
+              "body": [
+                {
+                    "ExpressionStatement": {
+                      "expression": {
+                        "BinaryExpression": {
+                          "left": {
+                            "Identifier": {
+                              "name": "a"
+                            }
+                          },
+                          "right": {
+                            "Literal": {
+                              "NumericLiteral": {
+                                "value": 3
+                              }
+                            }
+                          },
+                          "operator": "Equality"
+                        }
+                      }
+                    }
+                  }
+              ]
+            }
+          }"#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
     fn logical_expression_relational() {
         let program = "true || false;".to_string();
         let expected = r#"
@@ -1219,6 +1294,112 @@ mod tests {
               ]
             }
           }"#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn variable_assignment_expression() {
+        let program = "a = 42;".to_string();
+        let expected = r#"
+        {
+            "Program": {
+              "body": [
+                {
+                  "ExpressionStatement": {
+                    "expression": {
+                      "AssignmentExpression": {
+                        "left": {
+                          "Identifier": {
+                            "name": "a"
+                          }
+                        },
+                        "right": {
+                          "Literal": {
+                            "NumericLiteral": {
+                              "value": 42
+                            }
+                          }
+                        },
+                        "operator": "SimpleAssignment"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }                     
+        "#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn if_statement_assignment() {
+        let program = r#"
+            if (a == 5) {
+                a = 6;
+            }
+        "#
+        .to_string();
+        let expected = r#"
+            {
+                "Program": {
+                    "body": [
+                      {
+                        "IfStatement": {
+                          "test": {
+                            "BinaryExpression": {
+                              "left": {
+                                "Identifier": {
+                                  "name": "a"
+                                }
+                              },
+                              "right": {
+                                "Literal": {
+                                  "NumericLiteral": {
+                                    "value": 5
+                                  }
+                                }
+                              },
+                              "operator": "Equality"
+                            }
+                          },
+                          "consequent": {
+                            "BlockStatement": {
+                              "body": [
+                                {
+                                  "ExpressionStatement": {
+                                    "expression": {
+                                      "AssignmentExpression": {
+                                        "left": {
+                                          "Identifier": {
+                                            "name": "a"
+                                          }
+                                        },
+                                        "right": {
+                                          "Literal": {
+                                            "NumericLiteral": {
+                                              "value": 6
+                                            }
+                                          }
+                                        },
+                                        "operator": "SimpleAssignment"
+                                      }
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "alternate": null
+                        }
+                      }
+                    ]
+                  }
+                }"#
         .to_string();
 
         expect_ast!(program, expected);
