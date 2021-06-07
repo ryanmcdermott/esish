@@ -235,6 +235,10 @@ impl Parser {
                 return Node::WhileStatement(self.while_statement());
             }
 
+            TokenType::KeywordDo => {
+                return Node::WhileStatement(self.do_while_statement());
+            }
+
             _ => {
                 return Node::ExpressionStatement(self.expression_statement());
             }
@@ -358,6 +362,23 @@ impl Parser {
         let test = self.expression();
         self.eat(TokenType::CloseParen);
         let body = Box::new(self.statement());
+
+        WhileStatement { test, body }
+    }
+
+    /**
+     * DoWhileStatement
+     *   : 'do' Statement 'while' '(' Expression ')'
+     *   ;
+     */
+    fn do_while_statement(&mut self) -> WhileStatement {
+        self.eat(TokenType::KeywordDo);
+        let body = Box::new(self.statement());
+        self.eat(TokenType::KeywordWhile);
+        self.eat(TokenType::OpenParen);
+        let test = self.expression();
+        self.eat(TokenType::CloseParen);
+        self.eat(TokenType::Semicolon);
 
         WhileStatement { test, body }
     }
@@ -843,9 +864,9 @@ impl Parser {
         if token.kind != expected_token_type {
             let (token_type, token_value) = self.get_lookahead_token_str();
             panic!(
-                "Incorrect token type, for\nToken type: {}\nToken value: {}\n\n Expected token type: {}",
-                token_type, token_value, expected_token_type_str
-            );
+        "Incorrect token type, for\nToken type: {}\nToken value: {}\n\n Expected token type: {}",
+        token_type, token_value, expected_token_type_str
+      );
         }
 
         self.lookahead = self.tokenizer.get_next_token();
@@ -1507,6 +1528,84 @@ mod tests {
         "#
         .to_string();
 
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn do_while_statement() {
+        let program = r#"
+      do {
+        a = a + 1;
+      } while (a < 5);
+    "#
+        .to_string();
+        let expected = r#"
+    {
+      "Program": {
+        "body": [
+          {
+            "WhileStatement": {
+              "test": {
+                "BinaryExpression": {
+                  "left": {
+                    "Identifier": {
+                      "name": "a"
+                    }
+                  },
+                  "right": {
+                    "Literal": {
+                      "NumericLiteral": {
+                        "value": 5
+                      }
+                    }
+                  },
+                  "operator": "OperatorRelational"
+                }
+              },
+              "body": {
+                "BlockStatement": {
+                  "body": [
+                    {
+                      "ExpressionStatement": {
+                        "expression": {
+                          "AssignmentExpression": {
+                            "left": {
+                              "Identifier": {
+                                "name": "a"
+                              }
+                            },
+                            "right": {
+                              "BinaryExpression": {
+                                "left": {
+                                  "Identifier": {
+                                    "name": "a"
+                                  }
+                                },
+                                "right": {
+                                  "Literal": {
+                                    "NumericLiteral": {
+                                      "value": 1
+                                    }
+                                  }
+                                },
+                                "operator": "OperatorAdd"
+                              }
+                            },
+                            "operator": "SimpleAssignment"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+    "#
+        .to_string();
         expect_ast!(program, expected);
     }
 }
