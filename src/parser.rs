@@ -130,6 +130,20 @@ pub struct WhileStatement {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub enum ForStatementInit {
+    Expression(Expression),
+    VariableStatement(VariableStatement),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ForStatement {
+    body: Box<Node>,
+    init: Option<ForStatementInit>,
+    test: Option<Expression>,
+    update: Option<Expression>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Node {
     Program(Program),
     BlockStatement(BlockStatement),
@@ -138,6 +152,7 @@ pub enum Node {
     VariableStatement(VariableStatement),
     IfStatement(IfStatement),
     WhileStatement(WhileStatement),
+    ForStatement(ForStatement),
 }
 
 type BinaryExpressionFn = fn(&Parser) -> Expression;
@@ -237,6 +252,10 @@ impl Parser {
 
             TokenType::KeywordDo => {
                 return Node::WhileStatement(self.do_while_statement());
+            }
+
+            TokenType::KeywordFor => {
+                return Node::ForStatement(self.for_statement());
             }
 
             _ => {
@@ -381,6 +400,51 @@ impl Parser {
         self.eat(TokenType::Semicolon);
 
         WhileStatement { test, body }
+    }
+
+    /**
+     * ForStatement
+     *   : 'for' '(' OptForStatementInit ';' OptExpression ';' OptExpression ')' Statement
+     *   ;
+     */
+    fn for_statement(&mut self) -> ForStatement {
+        let mut init: Option<ForStatementInit> = None;
+        let mut test: Option<Expression> = None;
+        let mut update: Option<Expression> = None;
+
+        self.eat(TokenType::KeywordFor);
+        self.eat(TokenType::OpenParen);
+
+        if self.get_lookahead_kind() != TokenType::Semicolon {
+            if self.get_lookahead_kind() == TokenType::KeywordLet {
+                init = Some(ForStatementInit::VariableStatement(
+                    self.variable_statement(),
+                ));
+            } else {
+                init = Some(ForStatementInit::Expression(self.expression()));
+                self.eat(TokenType::Semicolon);
+            }
+        }
+
+        if self.get_lookahead_kind() != TokenType::Semicolon {
+            test = Some(self.expression());
+        }
+        self.eat(TokenType::Semicolon);
+
+        if self.get_lookahead_kind() != TokenType::Semicolon {
+            update = Some(self.expression())
+        }
+        self.eat(TokenType::Semicolon);
+        self.eat(TokenType::CloseParen);
+
+        let body = Box::new(self.statement());
+
+        ForStatement {
+            init,
+            test,
+            update,
+            body,
+        }
     }
 
     /**
@@ -1606,6 +1670,130 @@ mod tests {
         }
         "#
         .to_string();
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn for_loop() {
+        let program = r#"
+        for (let a = 0; a < 5; a = a + 1;) {
+          b = b * 5;
+        }
+      "#
+        .to_string();
+        let expected = r#"
+        {
+          "Program": {
+            "body": [
+              {
+                "ForStatement": {
+                  "body": {
+                    "BlockStatement": {
+                      "body": [
+                        {
+                          "ExpressionStatement": {
+                            "expression": {
+                              "AssignmentExpression": {
+                                "left": {
+                                  "Identifier": {
+                                    "name": "b"
+                                  }
+                                },
+                                "right": {
+                                  "BinaryExpression": {
+                                    "left": {
+                                      "Identifier": {
+                                        "name": "b"
+                                      }
+                                    },
+                                    "right": {
+                                      "Literal": {
+                                        "NumericLiteral": {
+                                          "value": 5
+                                        }
+                                      }
+                                    },
+                                    "operator": "OperatorMultiply"
+                                  }
+                                },
+                                "operator": "SimpleAssignment"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "init": {
+                    "VariableStatement": {
+                      "declarations": [
+                        {
+                          "id": {
+                            "name": "a"
+                          },
+                          "init": {
+                            "Literal": {
+                              "NumericLiteral": {
+                                "value": 0
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "test": {
+                    "BinaryExpression": {
+                      "left": {
+                        "Identifier": {
+                          "name": "a"
+                        }
+                      },
+                      "right": {
+                        "Literal": {
+                          "NumericLiteral": {
+                            "value": 5
+                          }
+                        }
+                      },
+                      "operator": "OperatorRelational"
+                    }
+                  },
+                  "update": {
+                    "AssignmentExpression": {
+                      "left": {
+                        "Identifier": {
+                          "name": "a"
+                        }
+                      },
+                      "right": {
+                        "BinaryExpression": {
+                          "left": {
+                            "Identifier": {
+                              "name": "a"
+                            }
+                          },
+                          "right": {
+                            "Literal": {
+                              "NumericLiteral": {
+                                "value": 1
+                              }
+                            }
+                          },
+                          "operator": "OperatorAdd"
+                        }
+                      },
+                      "operator": "SimpleAssignment"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+        "#
+        .to_string();
+
         expect_ast!(program, expected);
     }
 }
