@@ -1534,77 +1534,77 @@ mod tests {
     #[test]
     fn do_while_statement() {
         let program = r#"
-      do {
-        a = a + 1;
-      } while (a < 5);
-    "#
+          do {
+            a = a + 1;
+          } while (a < 5);
+        "#
         .to_string();
         let expected = r#"
-    {
-      "Program": {
-        "body": [
-          {
-            "WhileStatement": {
-              "test": {
-                "BinaryExpression": {
-                  "left": {
-                    "Identifier": {
-                      "name": "a"
+        {
+          "Program": {
+            "body": [
+              {
+                "WhileStatement": {
+                  "test": {
+                    "BinaryExpression": {
+                      "left": {
+                        "Identifier": {
+                          "name": "a"
+                        }
+                      },
+                      "right": {
+                        "Literal": {
+                          "NumericLiteral": {
+                            "value": 5
+                          }
+                        }
+                      },
+                      "operator": "OperatorRelational"
                     }
                   },
-                  "right": {
-                    "Literal": {
-                      "NumericLiteral": {
-                        "value": 5
-                      }
-                    }
-                  },
-                  "operator": "OperatorRelational"
-                }
-              },
-              "body": {
-                "BlockStatement": {
-                  "body": [
-                    {
-                      "ExpressionStatement": {
-                        "expression": {
-                          "AssignmentExpression": {
-                            "left": {
-                              "Identifier": {
-                                "name": "a"
-                              }
-                            },
-                            "right": {
-                              "BinaryExpression": {
+                  "body": {
+                    "BlockStatement": {
+                      "body": [
+                        {
+                          "ExpressionStatement": {
+                            "expression": {
+                              "AssignmentExpression": {
                                 "left": {
                                   "Identifier": {
                                     "name": "a"
                                   }
                                 },
                                 "right": {
-                                  "Literal": {
-                                    "NumericLiteral": {
-                                      "value": 1
-                                    }
+                                  "BinaryExpression": {
+                                    "left": {
+                                      "Identifier": {
+                                        "name": "a"
+                                      }
+                                    },
+                                    "right": {
+                                      "Literal": {
+                                        "NumericLiteral": {
+                                          "value": 1
+                                        }
+                                      }
+                                    },
+                                    "operator": "OperatorAdd"
                                   }
                                 },
-                                "operator": "OperatorAdd"
+                                "operator": "SimpleAssignment"
                               }
-                            },
-                            "operator": "SimpleAssignment"
+                            }
                           }
                         }
-                      }
+                      ]
                     }
-                  ]
+                  }
                 }
               }
-            }
+            ]
           }
-        ]
-      }
-    }
-    "#
+        }
+        "#
         .to_string();
         expect_ast!(program, expected);
     }
