@@ -1907,4 +1907,34 @@ mod tests {
 
         expect_ast!(program, expected);
     }
+
+    #[test]
+    fn function_declaration_empty() {
+        let program = r#"
+        function foo() {}
+      "#
+        .to_string();
+        let expected = r#"
+        {
+          "Program": {
+            "body": [
+              {
+                "FunctionDeclaration": {
+                  "name": {
+                    "name": "foo"
+                  },
+                  "params": [],
+                  "body": {
+                    "body": []
+                  }
+                }
+              }
+            ]
+          }
+        }
+        "#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
 }
