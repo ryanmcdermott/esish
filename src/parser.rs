@@ -86,6 +86,19 @@ pub struct UnaryExpression {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct MemberExpression {
+    object: Box<Expression>,
+    computed: bool,
+    property: Box<Expression>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct CallExpression {
+    callee: Box<Expression>,
+    arguments: Vec<Box<Expression>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Expression {
     Literal(Literal),
     Identifier(Identifier),
@@ -93,6 +106,8 @@ pub enum Expression {
     UnaryExpression(UnaryExpression),
     LogicalExpression(LogicalExpression),
     AssignmentExpression(AssignmentExpression),
+    CallExpression(CallExpression),
+    MemberExpression(MemberExpression),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -654,7 +669,7 @@ impl Parser {
     }
 
     fn left_hand_side_expression(&mut self) -> Expression {
-        self.primary_expression()
+        self.call_member_expression()
     }
 
     fn logical_expression(
@@ -800,6 +815,121 @@ impl Parser {
                 return left;
             }
         }
+    }
+
+    /**
+     * CallMemberExpression
+     *   : MemberExpression
+     *   | CallExpression
+     *   ;
+     */
+    fn call_member_expression(&mut self) -> Expression {
+        // TODO: Check for super
+        let member = self.member_expression();
+
+        if self.lookahead.is_some() && self.get_lookahead_kind() == TokenType::OpenParen {
+            return self.call_expression(member);
+        }
+
+        return member;
+    }
+
+    /**
+     * CallExpression
+     *   : Callee Arguments
+     *   ;
+     *
+     * Callee
+     *   : MemberExpression
+     *   | CallExpression
+     *   ;
+     */
+    fn call_expression(&mut self, callee: Expression) -> Expression {
+        let mut exp = Expression::CallExpression(CallExpression {
+            callee: Box::new(callee),
+            arguments: self.arguments(),
+        });
+
+        if self.lookahead.is_some() && self.get_lookahead_kind() == TokenType::OpenParen {
+            exp = self.call_expression(exp);
+        }
+
+        exp
+    }
+
+    /**
+     * Arguments
+     *   : '(' OptArgumentList ')'
+     *   ;
+     */
+    fn arguments(&mut self) -> Vec<Box<Expression>> {
+        let mut args: Vec<Box<Expression>> = vec![];
+        self.eat(TokenType::OpenParen);
+
+        if self.lookahead.is_some() && self.get_lookahead_kind() != TokenType::CloseParen {
+            args = self.argument_list();
+        }
+
+        self.eat(TokenType::CloseParen);
+
+        args
+    }
+
+    /**
+     * ArgumentList
+     *   : AssignmentExpression
+     *   | ArgumentList ',' AssignmentExpression
+     */
+    fn argument_list(&mut self) -> Vec<Box<Expression>> {
+        let mut args: Vec<Box<Expression>> = vec![];
+
+        loop {
+            args.push(Box::new(self.assignment_expression()));
+
+            if self.lookahead.is_none() || self.get_lookahead_kind() != TokenType::Comma {
+                break;
+            }
+
+            self.eat(TokenType::Comma);
+        }
+
+        args
+    }
+
+    /**
+     * MemberExpression
+     *   : PrimaryExpression
+     *   | MemberExpression '.' Identifier
+     *   | MemberExpression '[' Expression ']'
+     */
+    fn member_expression(&mut self) -> Expression {
+        let mut exp: Expression = self.primary_expression();
+
+        while self.lookahead.is_some()
+            && (self.get_lookahead_kind() == TokenType::Point
+                || self.get_lookahead_kind() == TokenType::OpenSquareBracket)
+        {
+            if self.get_lookahead_kind() == TokenType::Point {
+                self.eat(TokenType::Point);
+                let property = self.identifier();
+                exp = Expression::MemberExpression(MemberExpression {
+                    computed: false,
+                    object: Box::new(exp),
+                    property: Box::new(Expression::Identifier(property)),
+                });
+            } else {
+                self.eat(TokenType::OpenSquareBracket);
+                let property = self.expression();
+                self.eat(TokenType::CloseSquareBracket);
+                exp = Expression::MemberExpression(MemberExpression {
+                    computed: true,
+                    object: Box::new(exp),
+                    property: Box::new(property),
+                });
+            }
+        }
+
+        exp
     }
 
     /**
@@ -2009,5 +2139,230 @@ mod tests {
         .to_string();
 
         expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn call_expression() {
+        let program = r#"
+          function a() {}
+          function b(foo) {}
+          function c(foo, bar) {}
+          a();
+          b(2);
+          c(3, 4);"#
+            .to_string();
+        let expected = r#"
+        {
+          "Program": {
+            "body": [
+              {
+                "FunctionDeclaration": {
+                  "name": {
+                    "name": "a"
+                  },
+                  "params": [],
+                  "body": {
+                    "body": []
+                  }
+                }
+              },
+              {
+                "FunctionDeclaration": {
+                  "name": {
+                    "name": "b"
+                  },
+                  "params": [
+                    {
+                      "name": "foo"
+                    }
+                  ],
+                  "body": {
+                    "body": []
+                  }
+                }
+              },
+              {
+                "FunctionDeclaration": {
+                  "name": {
+                    "name": "c"
+                  },
+                  "params": [
+                    {
+                      "name": "foo"
+                    },
+                    {
+                      "name": "bar"
+                    }
+                  ],
+                  "body": {
+                    "body": []
+                  }
+                }
+              },
+              {
+                "ExpressionStatement": {
+                  "expression": {
+                    "CallExpression": {
+                      "callee": {
+                        "Identifier": {
+                          "name": "a"
+                        }
+                      },
+                      "arguments": []
+                    }
+                  }
+                }
+              },
+              {
+                "ExpressionStatement": {
+                  "expression": {
+                    "CallExpression": {
+                      "callee": {
+                        "Identifier": {
+                          "name": "b"
+                        }
+                      },
+                      "arguments": [
+                        {
+                          "Literal": {
+                            "NumericLiteral": {
+                              "value": 2
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "ExpressionStatement": {
+                  "expression": {
+                    "CallExpression": {
+                      "callee": {
+                        "Identifier": {
+                          "name": "c"
+                        }
+                      },
+                      "arguments": [
+                        {
+                          "Literal": {
+                            "NumericLiteral": {
+                              "value": 3
+                            }
+                          }
+                        },
+                        {
+                          "Literal": {
+                            "NumericLiteral": {
+                              "value": 4
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        } "#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn member_expression() {
+        let program = r#"
+          let a = Array(1,2,3);
+          b = a[1];
+        "#
+        .to_string();
+        let expected = r#"
+        {
+          "Program": {
+            "body": [
+              {
+                "VariableStatement": {
+                  "declarations": [
+                    {
+                      "id": {
+                        "name": "a"
+                      },
+                      "init": {
+                        "CallExpression": {
+                          "callee": {
+                            "Identifier": {
+                              "name": "Array"
+                            }
+                          },
+                          "arguments": [
+                            {
+                              "Literal": {
+                                "NumericLiteral": {
+                                  "value": 1
+                                }
+                              }
+                            },
+                            {
+                              "Literal": {
+                                "NumericLiteral": {
+                                  "value": 2
+                                }
+                              }
+                            },
+                            {
+                              "Literal": {
+                                "NumericLiteral": {
+                                  "value": 3
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "ExpressionStatement": {
+                  "expression": {
+                    "AssignmentExpression": {
+                      "left": {
+                        "Identifier": {
+                          "name": "b"
+                        }
+                      },
+                      "right": {
+                        "MemberExpression": {
+                          "object": {
+                            "Identifier": {
+                              "name": "a"
+                            }
+                          },
+                          "computed": true,
+                          "property": {
+                            "Literal": {
+                              "NumericLiteral": {
+                                "value": 1
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "operator": "SimpleAssignment"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+        "#
+        .to_string();
+
+        expect_ast!(program, expected, true);
     }
 }
