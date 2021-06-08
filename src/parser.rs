@@ -144,6 +144,13 @@ pub struct ForStatement {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct FunctionDeclaration {
+    name: Identifier,
+    params: Vec<Identifier>,
+    body: Box<BlockStatement>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Node {
     Program(Program),
     BlockStatement(BlockStatement),
@@ -153,6 +160,7 @@ pub enum Node {
     IfStatement(IfStatement),
     WhileStatement(WhileStatement),
     ForStatement(ForStatement),
+    FunctionDeclaration(FunctionDeclaration),
 }
 
 type BinaryExpressionFn = fn(&Parser) -> Expression;
@@ -256,6 +264,10 @@ impl Parser {
 
             TokenType::KeywordFor => {
                 return Node::ForStatement(self.for_statement());
+            }
+
+            TokenType::KeywordDef => {
+                return Node::FunctionDeclaration(self.function_declaration());
             }
 
             _ => {
@@ -445,6 +457,34 @@ impl Parser {
             update,
             body,
         }
+    }
+
+    /**
+     * FunctionDeclaration
+     *   : 'function' Identifier '(' OptFormalParameterList ')' BlockStatement
+     *   ;
+     */
+    fn function_declaration(&mut self) -> FunctionDeclaration {
+        self.eat(TokenType::KeywordDef);
+        let name = self.identifier();
+        self.eat(TokenType::OpenParen);
+
+        let mut params = vec![];
+        if self.get_lookahead_kind() != TokenType::CloseParen {
+            loop {
+                params.push(self.identifier());
+                if self.lookahead.is_none() || self.get_lookahead_kind() != TokenType::Comma {
+                    break;
+                }
+                self.eat(TokenType::Comma);
+            }
+        }
+
+        self.eat(TokenType::CloseParen);
+
+        let body = Box::new(self.block_statement());
+
+        FunctionDeclaration { name, body, params }
     }
 
     /**
@@ -1785,6 +1825,77 @@ mod tests {
                       },
                       "operator": "SimpleAssignment"
                     }
+                  }
+                }
+              }
+            ]
+          }
+        }
+        "#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn function_declaration() {
+        let program = r#"
+        function foo(bar, baz) {
+          baz = baz + 1;
+        }
+      "#
+        .to_string();
+        let expected = r#"
+        {
+          "Program": {
+            "body": [
+              {
+                "FunctionDeclaration": {
+                  "name": {
+                    "name": "foo"
+                  },
+                  "params": [
+                    {
+                      "name": "bar"
+                    },
+                    {
+                      "name": "baz"
+                    }
+                  ],
+                  "body": {
+                    "body": [
+                      {
+                        "ExpressionStatement": {
+                          "expression": {
+                            "AssignmentExpression": {
+                              "left": {
+                                "Identifier": {
+                                  "name": "baz"
+                                }
+                              },
+                              "right": {
+                                "BinaryExpression": {
+                                  "left": {
+                                    "Identifier": {
+                                      "name": "baz"
+                                    }
+                                  },
+                                  "right": {
+                                    "Literal": {
+                                      "NumericLiteral": {
+                                        "value": 1
+                                      }
+                                    }
+                                  },
+                                  "operator": "OperatorAdd"
+                                }
+                              },
+                              "operator": "SimpleAssignment"
+                            }
+                          }
+                        }
+                      }
+                    ]
                   }
                 }
               }

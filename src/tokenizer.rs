@@ -96,7 +96,7 @@ lazy_static! {
     static ref KEYWORD_WHILE_REGEX: Regex = Regex::new(r"^\bwhile\b").unwrap();
     static ref KEYWORD_DO_REGEX: Regex = Regex::new(r"^\bdo\b").unwrap();
     static ref KEYWORD_FOR_REGEX: Regex = Regex::new(r"^\bfor\b").unwrap();
-    static ref KEYWORD_DEF_REGEX: Regex = Regex::new(r"^\bdef\b").unwrap();
+    static ref KEYWORD_DEF_REGEX: Regex = Regex::new(r"^\bfunction\b").unwrap();
     static ref KEYWORD_RETURN_REGEX: Regex = Regex::new(r"^\breturn\b").unwrap();
     static ref KEYWORD_CLASS_REGEX: Regex = Regex::new(r"^\bclass\b").unwrap();
     static ref KEYWORD_EXTENDS_REGEX: Regex = Regex::new(r"^\bextends\b").unwrap();
