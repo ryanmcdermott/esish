@@ -151,6 +151,11 @@ pub struct FunctionDeclaration {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ReturnStatement {
+    argument: Option<Expression>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Node {
     Program(Program),
     BlockStatement(BlockStatement),
@@ -161,6 +166,7 @@ pub enum Node {
     WhileStatement(WhileStatement),
     ForStatement(ForStatement),
     FunctionDeclaration(FunctionDeclaration),
+    ReturnStatement(ReturnStatement),
 }
 
 type BinaryExpressionFn = fn(&Parser) -> Expression;
@@ -268,6 +274,10 @@ impl Parser {
 
             TokenType::KeywordDef => {
                 return Node::FunctionDeclaration(self.function_declaration());
+            }
+
+            TokenType::KeywordReturn => {
+                return Node::ReturnStatement(self.return_statement());
             }
 
             _ => {
@@ -485,6 +495,24 @@ impl Parser {
         let body = Box::new(self.block_statement());
 
         FunctionDeclaration { name, body, params }
+    }
+
+    /**
+     * ReturnStatement
+     *   : 'return' OptExpression
+     *   ;
+     */
+    fn return_statement(&mut self) -> ReturnStatement {
+        self.eat(TokenType::KeywordReturn);
+        let mut argument: Option<Expression> = None;
+
+        if self.get_lookahead_kind() != TokenType::Semicolon {
+            argument = Some(self.expression());
+        }
+
+        self.eat(TokenType::Semicolon);
+
+        ReturnStatement { argument }
     }
 
     /**
@@ -1024,6 +1052,7 @@ mod tests {
 
         expect_ast!(program, expected);
     }
+
     #[test]
     fn empty_statement() {
         let program = ";".to_string();
@@ -1926,6 +1955,50 @@ mod tests {
                   "params": [],
                   "body": {
                     "body": []
+                  }
+                }
+              }
+            ]
+          }
+        }
+        "#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn return_statement() {
+        let program = r#"
+          function foo() {
+            return 42;
+          }
+        "#
+        .to_string();
+        let expected = r#"
+        {
+          "Program": {
+            "body": [
+              {
+                "FunctionDeclaration": {
+                  "name": {
+                    "name": "foo"
+                  },
+                  "params": [],
+                  "body": {
+                    "body": [
+                      {
+                        "ReturnStatement": {
+                          "argument": {
+                            "Literal": {
+                              "NumericLiteral": {
+                                "value": 42
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
                   }
                 }
               }
