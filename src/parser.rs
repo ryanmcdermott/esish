@@ -171,6 +171,13 @@ pub struct ReturnStatement {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ClassDeclaration {
+    id: Identifier,
+    body: Box<BlockStatement>,
+    super_class: Option<Identifier>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Node {
     Program(Program),
     BlockStatement(BlockStatement),
@@ -182,6 +189,7 @@ pub enum Node {
     ForStatement(ForStatement),
     FunctionDeclaration(FunctionDeclaration),
     ReturnStatement(ReturnStatement),
+    ClassDeclaration(ClassDeclaration),
 }
 
 type BinaryExpressionFn = fn(&Parser) -> Expression;
@@ -254,6 +262,11 @@ impl Parser {
      *   | BlockStatement
      *   | EmptyStatement
      *   | VariableStatement
+     *   | IfStatement
+     *   | IterationStatement
+     *   | FunctionDeclaration
+     *   | ReturnStatement
+     *   | ClassDeclaration
      *   ;
      */
     fn statement(&mut self) -> Node {
@@ -293,6 +306,10 @@ impl Parser {
 
             TokenType::KeywordReturn => {
                 return Node::ReturnStatement(self.return_statement());
+            }
+
+            TokenType::KeywordClass => {
+                return Node::ClassDeclaration(self.class_declaration());
             }
 
             _ => {
@@ -510,6 +527,30 @@ impl Parser {
         let body = Box::new(self.block_statement());
 
         FunctionDeclaration { name, body, params }
+    }
+
+    /**
+     * ClassDeclaration
+     *   : 'class' Identifier OptClassExtends BlockStatement
+     *   ;
+     */
+    fn class_declaration(&mut self) -> ClassDeclaration {
+        self.eat(TokenType::KeywordClass);
+        let id = self.identifier();
+        let mut super_class = None;
+
+        if self.get_lookahead_kind() == TokenType::KeywordExtends {
+            self.eat(TokenType::KeywordExtends);
+            super_class = Some(self.identifier());
+        }
+
+        let body = Box::new(self.block_statement());
+
+        ClassDeclaration {
+            id,
+            super_class,
+            body,
+        }
     }
 
     /**
@@ -2363,6 +2404,66 @@ mod tests {
         "#
         .to_string();
 
-        expect_ast!(program, expected, true);
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn class_declaration() {
+        let program = r#"
+          class Foo extends Bar {
+            function bar() {
+              return 42;
+            }
+          }
+        "#
+        .to_string();
+        let expected = r#"
+        {
+          "Program": {
+            "body": [
+              {
+                "ClassDeclaration": {
+                  "id": {
+                    "name": "Foo"
+                  },
+                  "body": {
+                    "body": [
+                      {
+                        "FunctionDeclaration": {
+                          "name": {
+                            "name": "bar"
+                          },
+                          "params": [],
+                          "body": {
+                            "body": [
+                              {
+                                "ReturnStatement": {
+                                  "argument": {
+                                    "Literal": {
+                                      "NumericLiteral": {
+                                        "value": 42
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "super_class": {
+                    "name": "Bar"
+                  }
+                }
+              }
+            ]
+          }
+        }
+        "#
+        .to_string();
+
+        expect_ast!(program, expected);
     }
 }
