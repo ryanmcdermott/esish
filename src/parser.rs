@@ -105,6 +105,9 @@ pub struct NewExpression {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ThisExpression {}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct CallExpression {
     callee: Box<Expression>,
     arguments: Vec<Box<Expression>>,
@@ -121,6 +124,7 @@ pub enum Expression {
     CallExpression(CallExpression),
     MemberExpression(MemberExpression),
     NewExpression(NewExpression),
+    ThisExpression(ThisExpression),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -1041,6 +1045,10 @@ impl Parser {
                 return Expression::NewExpression(self.new_expression());
             }
 
+            TokenType::KeywordThis => {
+                return Expression::ThisExpression(self.this_expression());
+            }
+
             _ => {
                 return self.left_hand_side_expression();
             }
@@ -1088,6 +1096,11 @@ impl Parser {
             callee: Box::new(self.member_expression()),
             arguments: self.arguments(),
         }
+    }
+
+    fn this_expression(&mut self) -> ThisExpression {
+        self.eat(TokenType::KeywordThis);
+        ThisExpression {}
     }
 
     /**
@@ -2588,6 +2601,45 @@ mod tests {
           }
         }
         "#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn this_expression() {
+        let program = "let a = this.bar;".to_string();
+        let expected = r#"
+        {
+          "Program": {
+            "body": [
+              {
+                "VariableStatement": {
+                  "declarations": [
+                    {
+                      "id": {
+                        "name": "a"
+                      },
+                      "init": {
+                        "MemberExpression": {
+                          "object": {
+                            "ThisExpression": {}
+                          },
+                          "computed": false,
+                          "property": {
+                            "Identifier": {
+                              "name": "bar"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }"#
         .to_string();
 
         expect_ast!(program, expected);
