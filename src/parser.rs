@@ -59,10 +59,16 @@ pub struct StringLiteral {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NullLiteral {
+    value: (),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Literal {
     NumericLiteral(NumericLiteral),
     StringLiteral(StringLiteral),
     BooleanLiteral(BooleanLiteral),
+    NullLiteral(NullLiteral),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -1095,6 +1101,8 @@ impl Parser {
 
                 return Literal::BooleanLiteral(literal);
             }
+
+            TokenType::KeywordNull => return Literal::NullLiteral(NullLiteral { value: () }),
             _ => {
                 let lookahead = self.lookahead.clone().unwrap();
                 let token_type = serde_json::to_string(&lookahead.kind).unwrap();
@@ -2462,6 +2470,39 @@ mod tests {
           }
         }
         "#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn null_literal() {
+        let program = "let a = null;".to_string();
+        let expected = r#"
+        {
+          "Program": {
+            "body": [
+              {
+                "VariableStatement": {
+                  "declarations": [
+                    {
+                      "id": {
+                        "name": "a"
+                      },
+                      "init": {
+                        "Literal": {
+                          "NullLiteral": {
+                            "value": null
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        } "#
         .to_string();
 
         expect_ast!(program, expected);
