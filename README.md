@@ -11,13 +11,13 @@ use esish::{Parser, Tokenizer};
 
 let program = r#"
     class Fib {
-    function calc(num) {
-        if (num <= 1) {
-        return 1;
-        }
+        function calc(num) {
+            if (num <= 1) {
+            return 1;
+            }
 
-        return this.calc(num - 1) + this.calc(num - 2);
-    }
+            return this.calc(num - 1) + this.calc(num - 2);
+        }
     }
 
     let fib = new Fib();
@@ -36,210 +36,210 @@ println!("AST:\n {}", actual_ast);
 ### Output
 ```json
 {
-    "Program": {
+  "Program": {
     "body": [
-        {
+      {
         "ClassDeclaration": {
-            "id": {
+          "id": {
             "name": "Fib"
-            },
-            "body": {
+          },
+          "body": {
             "body": [
-                {
+              {
                 "FunctionDeclaration": {
-                    "name": {
+                  "name": {
                     "name": "calc"
-                    },
-                    "params": [
+                  },
+                  "params": [
                     {
-                        "name": "num"
+                      "name": "num"
                     }
-                    ],
-                    "body": {
+                  ],
+                  "body": {
                     "body": [
-                        {
+                      {
                         "IfStatement": {
-                            "test": {
+                          "test": {
                             "BinaryExpression": {
-                                "left": {
+                              "left": {
                                 "Identifier": {
-                                    "name": "num"
+                                  "name": "num"
                                 }
-                                },
-                                "right": {
+                              },
+                              "right": {
                                 "Literal": {
-                                    "NumericLiteral": {
+                                  "NumericLiteral": {
                                     "value": 1
-                                    }
+                                  }
                                 }
-                                },
-                                "operator": "OperatorRelational"
+                              },
+                              "operator": "OperatorRelational"
                             }
-                            },
-                            "consequent": {
+                          },
+                          "consequent": {
                             "BlockStatement": {
-                                "body": [
+                              "body": [
                                 {
-                                    "ReturnStatement": {
+                                  "ReturnStatement": {
                                     "argument": {
-                                        "Literal": {
+                                      "Literal": {
                                         "NumericLiteral": {
-                                            "value": 1
+                                          "value": 1
                                         }
-                                        }
+                                      }
                                     }
-                                    }
+                                  }
                                 }
-                                ]
+                              ]
                             }
-                            },
-                            "alternate": null
+                          },
+                          "alternate": null
                         }
-                        },
-                        {
+                      },
+                      {
                         "ReturnStatement": {
-                            "argument": {
+                          "argument": {
                             "BinaryExpression": {
-                                "left": {
+                              "left": {
                                 "CallExpression": {
-                                    "callee": {
+                                  "callee": {
                                     "MemberExpression": {
-                                        "object": {
+                                      "object": {
                                         "ThisExpression": {}
-                                        },
-                                        "computed": false,
-                                        "property": {
+                                      },
+                                      "computed": false,
+                                      "property": {
                                         "Identifier": {
-                                            "name": "calc"
+                                          "name": "calc"
                                         }
-                                        }
+                                      }
                                     }
-                                    },
-                                    "arguments": [
+                                  },
+                                  "arguments": [
                                     {
-                                        "BinaryExpression": {
+                                      "BinaryExpression": {
                                         "left": {
-                                            "Identifier": {
+                                          "Identifier": {
                                             "name": "num"
-                                            }
+                                          }
                                         },
                                         "right": {
-                                            "Literal": {
+                                          "Literal": {
                                             "NumericLiteral": {
-                                                "value": 1
+                                              "value": 1
                                             }
-                                            }
+                                          }
                                         },
                                         "operator": "OperatorAdd"
-                                        }
+                                      }
                                     }
-                                    ]
+                                  ]
                                 }
-                                },
-                                "right": {
+                              },
+                              "right": {
                                 "CallExpression": {
-                                    "callee": {
+                                  "callee": {
                                     "MemberExpression": {
-                                        "object": {
+                                      "object": {
                                         "ThisExpression": {}
-                                        },
-                                        "computed": false,
-                                        "property": {
+                                      },
+                                      "computed": false,
+                                      "property": {
                                         "Identifier": {
-                                            "name": "calc"
+                                          "name": "calc"
                                         }
-                                        }
+                                      }
                                     }
-                                    },
-                                    "arguments": [
+                                  },
+                                  "arguments": [
                                     {
-                                        "BinaryExpression": {
+                                      "BinaryExpression": {
                                         "left": {
-                                            "Identifier": {
+                                          "Identifier": {
                                             "name": "num"
-                                            }
+                                          }
                                         },
                                         "right": {
-                                            "Literal": {
+                                          "Literal": {
                                             "NumericLiteral": {
-                                                "value": 2
+                                              "value": 2
                                             }
-                                            }
+                                          }
                                         },
                                         "operator": "OperatorAdd"
-                                        }
+                                      }
                                     }
-                                    ]
+                                  ]
                                 }
-                                },
-                                "operator": "OperatorAdd"
+                              },
+                              "operator": "OperatorAdd"
                             }
-                            }
+                          }
                         }
-                        }
+                      }
                     ]
-                    }
+                  }
                 }
-                }
+              }
             ]
-            },
-            "super_class": null
+          },
+          "super_class": null
         }
-        },
-        {
+      },
+      {
         "VariableStatement": {
-            "declarations": [
+          "declarations": [
             {
-                "id": {
+              "id": {
                 "name": "fib"
-                },
-                "init": {
+              },
+              "init": {
                 "NewExpression": {
-                    "callee": {
+                  "callee": {
                     "Identifier": {
-                        "name": "Fib"
+                      "name": "Fib"
                     }
-                    },
-                    "arguments": []
+                  },
+                  "arguments": []
                 }
-                }
+              }
             }
-            ]
+          ]
         }
-        },
-        {
+      },
+      {
         "ExpressionStatement": {
-            "expression": {
+          "expression": {
             "CallExpression": {
-                "callee": {
+              "callee": {
                 "MemberExpression": {
-                    "object": {
+                  "object": {
                     "Identifier": {
-                        "name": "fib"
+                      "name": "fib"
                     }
-                    },
-                    "computed": false,
-                    "property": {
+                  },
+                  "computed": false,
+                  "property": {
                     "Identifier": {
-                        "name": "calc"
+                      "name": "calc"
                     }
-                    }
+                  }
                 }
-                },
-                "arguments": [
+              },
+              "arguments": [
                 {
-                    "Literal": {
+                  "Literal": {
                     "NumericLiteral": {
-                        "value": 42
+                      "value": 42
                     }
-                    }
+                  }
                 }
-                ]
+              ]
             }
-            }
+          }
         }
-        }
+      }
     ]
-    }
+  }
 }
 ```
