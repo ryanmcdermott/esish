@@ -99,6 +99,12 @@ pub struct MemberExpression {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NewExpression {
+    callee: Box<Expression>,
+    arguments: Vec<Box<Expression>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct CallExpression {
     callee: Box<Expression>,
     arguments: Vec<Box<Expression>>,
@@ -114,6 +120,7 @@ pub enum Expression {
     AssignmentExpression(AssignmentExpression),
     CallExpression(CallExpression),
     MemberExpression(MemberExpression),
+    NewExpression(NewExpression),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -1030,6 +1037,10 @@ impl Parser {
                 return Expression::Identifier(self.identifier());
             }
 
+            TokenType::KeywordNew => {
+                return Expression::NewExpression(self.new_expression());
+            }
+
             _ => {
                 return self.left_hand_side_expression();
             }
@@ -1065,6 +1076,18 @@ impl Parser {
         }
 
         Identifier { name }
+    }
+
+    /**
+     * NewExpression
+     *   : 'new' MemberExpression Arguments
+     */
+    fn new_expression(&mut self) -> NewExpression {
+        self.eat(TokenType::KeywordNew);
+        NewExpression {
+            callee: Box::new(self.member_expression()),
+            arguments: self.arguments(),
+        }
     }
 
     /**
@@ -2503,6 +2526,68 @@ mod tests {
             ]
           }
         } "#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    fn new_expression() {
+        let program = r#"
+        let a = new Array(1,2,3);
+      "#
+        .to_string();
+        let expected = r#"
+        {
+          "Program": {
+            "body": [
+              {
+                "VariableStatement": {
+                  "declarations": [
+                    {
+                      "id": {
+                        "name": "a"
+                      },
+                      "init": {
+                        "NewExpression": {
+                          "callee": {
+                            "Identifier": {
+                              "name": "Array"
+                            }
+                          },
+                          "arguments": [
+                            {
+                              "Literal": {
+                                "NumericLiteral": {
+                                  "value": 1
+                                }
+                              }
+                            },
+                            {
+                              "Literal": {
+                                "NumericLiteral": {
+                                  "value": 2
+                                }
+                              }
+                            },
+                            {
+                              "Literal": {
+                                "NumericLiteral": {
+                                  "value": 3
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+        "#
         .to_string();
 
         expect_ast!(program, expected);
