@@ -625,6 +625,8 @@ impl Parser {
             return left;
         }
 
+        self.assert_valid_lvalue_assignment(&left);
+
         if self.get_lookahead_kind() == TokenType::SimpleAssignment {
             self.eat(TokenType::SimpleAssignment);
         }
@@ -1188,6 +1190,18 @@ impl Parser {
 
         return token_type == TokenType::SimpleAssignment
             || token_type == TokenType::ComplexAssignment;
+    }
+
+    fn assert_valid_lvalue_assignment(&mut self, left: &Expression) {
+        match left {
+            Expression::Identifier(_) | Expression::MemberExpression(_) => {
+                return ();
+            }
+
+            _ => {
+                panic!("Invalid lvalue assignment.")
+            }
+        }
     }
 
     fn is_operator(&self, token: &Option<Token>) -> bool {
@@ -2637,6 +2651,23 @@ mod tests {
                   ]
                 }
               }
+            ]
+          }
+        }"#
+        .to_string();
+
+        expect_ast!(program, expected);
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid lvalue assignment.")]
+    fn invalid_assignment() {
+        let program = "42 = a;".to_string();
+        let expected = r#"
+        {
+          "Program": {
+            "body": [
+            
             ]
           }
         }"#
