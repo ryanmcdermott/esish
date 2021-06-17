@@ -2,68 +2,68 @@
 use crate::tokenizer::{Token, TokenType, Tokenizer};
 use serde::Serialize;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct Program {
     body: Vec<Node>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct EmptyStatement {}
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct Identifier {
     name: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub enum LeftAssignment {
     Identifier(Identifier),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct AssignmentExpression {
     left: Box<Expression>,
     right: Box<Expression>,
     operator: TokenType,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct VariableDeclaration {
     id: Identifier,
     init: Option<Expression>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct VariableStatement {
     declarations: Vec<VariableDeclaration>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct BlockStatement {
     body: Vec<Node>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct BooleanLiteral {
     value: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct NumericLiteral {
     value: i64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct StringLiteral {
     value: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct NullLiteral {
     value: (),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub enum Literal {
     NumericLiteral(NumericLiteral),
     StringLiteral(StringLiteral),
@@ -71,49 +71,49 @@ pub enum Literal {
     NullLiteral(NullLiteral),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct BinaryExpression {
     left: Box<Expression>,
     right: Box<Expression>,
     operator: TokenType,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct LogicalExpression {
     left: Box<Expression>,
     right: Box<Expression>,
     operator: TokenType,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct UnaryExpression {
     argument: Box<Expression>,
     operator: TokenType,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct MemberExpression {
     object: Box<Expression>,
     computed: bool,
     property: Box<Expression>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct NewExpression {
     callee: Box<Expression>,
     arguments: Vec<Box<Expression>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct ThisExpression {}
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct CallExpression {
     callee: Box<Expression>,
     arguments: Vec<Box<Expression>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub enum Expression {
     Literal(Literal),
     Identifier(Identifier),
@@ -127,14 +127,14 @@ pub enum Expression {
     ThisExpression(ThisExpression),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub enum LogicalExpressionBuilder {
     LogicalOrExpression,
     LogicalAndExpression,
     EqualityExpression,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub enum BinaryExpressionBuilder {
     PrimaryExpression,
     MultiplicativeExpression,
@@ -143,31 +143,31 @@ pub enum BinaryExpressionBuilder {
     UnaryExpression,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct ExpressionStatement {
     expression: Expression,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct IfStatement {
     test: Expression,
     consequent: Box<Node>,
     alternate: Box<Option<Node>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct WhileStatement {
     test: Expression,
     body: Box<Node>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub enum ForStatementInit {
     Expression(Expression),
     VariableStatement(VariableStatement),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct ForStatement {
     body: Box<Node>,
     init: Option<ForStatementInit>,
@@ -175,26 +175,26 @@ pub struct ForStatement {
     update: Option<Expression>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct FunctionDeclaration {
     name: Identifier,
     params: Vec<Identifier>,
     body: Box<BlockStatement>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct ReturnStatement {
     argument: Option<Expression>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub struct ClassDeclaration {
     id: Identifier,
     body: Box<BlockStatement>,
     super_class: Option<Identifier>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Serialize)]
 pub enum Node {
     Program(Program),
     BlockStatement(BlockStatement),
