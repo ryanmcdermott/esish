@@ -287,8 +287,7 @@ impl Parser {
      *   ;
      */
     fn statement(&mut self) -> Node {
-        let lookahead = self.lookahead.clone();
-        match lookahead.unwrap().kind {
+        match &self.lookahead.as_ref().unwrap().kind {
             TokenType::Semicolon => {
                 return Node::EmptyStatement(self.empty_statement());
             }
@@ -1173,7 +1172,7 @@ impl Parser {
         if token.is_none() {
             return false;
         }
-        let token_type = token.clone().unwrap().kind;
+        let token_type = token.as_ref().unwrap().kind;
 
         return token_type == TokenType::NumberLiteral
             || token_type == TokenType::StringLiteral
@@ -1218,8 +1217,8 @@ impl Parser {
             || token_type == TokenType::OperatorLogicalNot;
     }
 
-    fn eat(&mut self, expected_token_type: TokenType) {
-        let token = self.lookahead.as_ref().unwrap();
+    fn eat(&mut self, expected_token_type: TokenType) -> Token {
+        let token = self.lookahead.as_ref().unwrap().clone();
         let expected_token_type_str = serde_json::to_string(&expected_token_type).unwrap();
 
         if token.kind != expected_token_type {
@@ -1231,6 +1230,8 @@ impl Parser {
         }
 
         self.lookahead = self.tokenizer.get_next_token();
+
+        token
     }
 }
 
