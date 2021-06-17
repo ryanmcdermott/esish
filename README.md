@@ -13,7 +13,7 @@ let program = r#"
     class Fib {
         function calc(num) {
             if (num <= 1) {
-            return 1;
+                return 1;
             }
 
             return this.calc(num - 1) + this.calc(num - 2);
